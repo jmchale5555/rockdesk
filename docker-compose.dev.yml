@@ -1,0 +1,7 @@
+services:
+  web:
+    environment:
+      APACHE_RUN_USER: "#${HOST_UID:-1000}"
+      APACHE_RUN_GROUP: "#${HOST_GID:-1000}"
+    volumes:
+      - ./:/var/www/html:z

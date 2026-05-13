@@ -1,0 +1,23 @@
+<template>
+    <div
+    x-for="dayItem in availableDates"
+    class="flex outline group hover:bg-slate-400 hover:shadow-lg hover-dark-shadow rounded-lg mx-8 my-2 transition-all duration-300 cursor-pointer justify-center w-28">
+    <span class="cursor-auto">
+        <div class="text-center font-bold">
+
+
+            <div class="break-normal"></div>
+            <form class="text-xs text-red-800">
+                <button>
+                    <p x-text="dayItem"></p>
+                </button>
+            </form>
+        </div>
+    </span>
+
+</div>
+</template>
+
+<script type="module">
+    import app from "./dist/app.js";
+</script>
