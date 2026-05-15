@@ -12,33 +12,44 @@ class Password
 
     public function index()
     {
-        if (empty($_SESSION['USER']))
-        {
-            redirect('login');
-        }
+        require_login();
 
-        $data = [];
+        $sessionUser = $_SESSION['USER'];
+        $isForcedReset = password_reset_required($sessionUser);
+        $canChangePassword = can_change_local_password($sessionUser);
+        $data = [
+            'isForcedReset' => $isForcedReset,
+            'canChangePassword' => $canChangePassword,
+        ];
+
+        if (!$canChangePassword)
+        {
+            $this->view('password', $data);
+            return;
+        }
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST')
         {
             $user = new User;
-            $sessionUser = $_SESSION['USER'];
             $currentHash = (string)$sessionUser->password;
 
             if ($user->validatePasswordChange($_POST, $currentHash))
             {
+                $now = date('Y-m-d H:i:s');
                 $newHash = password_hash($_POST['password'], PASSWORD_BCRYPT);
 
                 $user->update((int)$sessionUser->id, [
                     'password' => $newHash,
-                    'updated_at' => date('Y-m-d H:i:s'),
+                    'must_reset_password' => 0,
+                    'updated_at' => $now,
                 ]);
 
                 $_SESSION['USER']->password = $newHash;
-                $_SESSION['USER']->updated_at = date('Y-m-d H:i:s');
+                $_SESSION['USER']->must_reset_password = 0;
+                $_SESSION['USER']->updated_at = $now;
 
                 message('Password updated successfully');
-                redirect('password');
+                redirect($isForcedReset ? 'home' : 'password');
             }
 
             $data['errors'] = $user->errors;

@@ -176,14 +176,14 @@ Purpose: move from self-signup to admin-managed accounts.
 
 Purpose: support temporary passwords safely enough for MVP.
 
-- [ ] Update password page to support forced reset after login.
-- [ ] If `must_reset_password = 1`, redirect user to password reset page.
-- [ ] Block normal app navigation until password is reset.
-- [ ] Clear `must_reset_password` after successful password change.
-- [ ] Password changes are only available for `auth_provider = 'local'`.
-- [ ] LDAP users later see a message that password is managed by Active Directory.
-- [ ] Require current password for normal self-service password changes.
-- [ ] For forced temporary-password reset, require current temporary password plus new password.
+- [x] Update password page to support forced reset after login.
+- [x] If `must_reset_password = 1`, redirect user to password reset page.
+- [x] Block normal app navigation until password is reset.
+- [x] Clear `must_reset_password` after successful password change.
+- [x] Password changes are only available for `auth_provider = 'local'`.
+- [x] LDAP users later see a message that password is managed by Active Directory.
+- [x] Require current password for normal self-service password changes.
+- [x] For forced temporary-password reset, require current temporary password plus new password.
 
 ## Phase 5 - Ticket Data Model
 

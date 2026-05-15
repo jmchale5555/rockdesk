@@ -58,6 +58,8 @@ class App
             }
         }
 
+        require_password_reset_complete($this->controller);
+
         call_user_func_array([$controller, $this->method], array_values($URL));
     }
 }

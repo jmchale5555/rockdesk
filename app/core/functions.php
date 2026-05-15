@@ -183,6 +183,34 @@ function is_final_active_admin(mixed $user, int $activeAdminCount): bool
     return $activeAdminCount <= 1;
 }
 
+function password_reset_required(mixed $user = null): bool
+{
+    $user = $user ?? current_user();
+
+    return !empty($user) && (int)($user->must_reset_password ?? 0) === 1;
+}
+
+function can_change_local_password(mixed $user = null): bool
+{
+    $user = $user ?? current_user();
+
+    return !empty($user) && ($user->auth_provider ?? 'local') === 'local';
+}
+
+function is_password_reset_allowed_route(string $controller): bool
+{
+    return in_array(strtolower($controller), ['password', 'logout'], true);
+}
+
+function require_password_reset_complete(string $controller): void
+{
+    if (password_reset_required() && !is_password_reset_allowed_route($controller))
+    {
+        message('You must reset your temporary password before continuing.');
+        redirect('password');
+    }
+}
+
 /** load image. if not exist, load placeholder **/
 function get_image(mixed $file = '', string $type = 'post'): string
 {

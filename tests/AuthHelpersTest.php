@@ -76,4 +76,26 @@ final class AuthHelpersTest extends TestCase
         $this->assertFalse(is_final_active_admin($inactiveAdmin, 1));
         $this->assertFalse(is_final_active_admin($staff, 1));
     }
+
+    public function testPasswordResetRequiredDetectsTemporaryPasswordState(): void
+    {
+        $this->assertTrue(password_reset_required((object)['must_reset_password' => 1]));
+        $this->assertFalse(password_reset_required((object)['must_reset_password' => 0]));
+        $this->assertFalse(password_reset_required(null));
+    }
+
+    public function testOnlyLocalUsersCanChangePasswordInApplication(): void
+    {
+        $this->assertTrue(can_change_local_password((object)['auth_provider' => 'local']));
+        $this->assertTrue(can_change_local_password((object)[]));
+        $this->assertFalse(can_change_local_password((object)['auth_provider' => 'ldap']));
+    }
+
+    public function testForcedPasswordResetAllowsOnlyPasswordAndLogoutRoutes(): void
+    {
+        $this->assertTrue(is_password_reset_allowed_route('Password'));
+        $this->assertTrue(is_password_reset_allowed_route('logout'));
+        $this->assertFalse(is_password_reset_allowed_route('Home'));
+        $this->assertFalse(is_password_reset_allowed_route('Users'));
+    }
 }
