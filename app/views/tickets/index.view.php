@@ -33,7 +33,8 @@
             <div class="grid">
                 <label for="status">Status
                     <select name="status" id="status">
-                        <option value="">Any status</option>
+                        <option value="<?= esc(Model\Ticket::STATUS_FILTER_ACTIVE) ?>" <?= old_select('status', Model\Ticket::STATUS_FILTER_ACTIVE, $filters['status'] ?? '', 'get') ?>>Not resolved or closed</option>
+                        <option value="" <?= old_select('status', '', $filters['status'] ?? '', 'get') ?>>Any status</option>
                         <?php foreach (Model\Ticket::STATUSES as $status): ?>
                             <option value="<?= esc($status) ?>" <?= old_select('status', $status, $filters['status'] ?? '', 'get') ?>><?= esc(str_replace('_', ' ', $status)) ?></option>
                         <?php endforeach; ?>

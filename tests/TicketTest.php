@@ -115,6 +115,16 @@ final class TicketTest extends TestCase
         $this->assertTrue($ticket->isStaffSettableStatus('resolved'));
     }
 
+    public function testStaffStatusFilterAllowsActiveAnyAndExactStatuses(): void
+    {
+        $ticket = new Ticket;
+
+        $this->assertTrue($ticket->isValidStaffStatusFilter(Ticket::STATUS_FILTER_ACTIVE));
+        $this->assertTrue($ticket->isValidStaffStatusFilter(''));
+        $this->assertTrue($ticket->isValidStaffStatusFilter('resolved'));
+        $this->assertFalse($ticket->isValidStaffStatusFilter('not-a-status'));
+    }
+
     public function testTicketPriorityValidationAllowsKnownPrioritiesOnly(): void
     {
         $ticket = new Ticket;

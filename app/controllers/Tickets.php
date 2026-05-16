@@ -19,12 +19,17 @@ class Tickets
         require_login();
 
         $ticket = new Ticket;
+        $defaultStatus = is_staff_or_admin() ? Ticket::STATUS_FILTER_ACTIVE : '';
         $filters = [
-            'status' => $_GET['status'] ?? '',
+            'status' => $_GET['status'] ?? $defaultStatus,
             'priority' => $_GET['priority'] ?? '',
             'assigned_to' => $_GET['assigned_to'] ?? '',
             'requester' => $_GET['requester'] ?? '',
         ];
+        if (is_staff_or_admin() && !$ticket->isValidStaffStatusFilter((string)$filters['status']))
+        {
+            $filters['status'] = Ticket::STATUS_FILTER_ACTIVE;
+        }
         $tickets = is_staff_or_admin()
             ? $ticket->listForStaff($filters)
             : $ticket->listForUser((int)current_user_id());

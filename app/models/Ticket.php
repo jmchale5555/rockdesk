@@ -8,6 +8,7 @@ class Ticket
 
     public const STATUSES = ['new', 'open', 'in_progress', 'waiting_on_user', 'resolved', 'closed'];
     public const STAFF_SET_STATUSES = ['open', 'in_progress', 'waiting_on_user', 'resolved'];
+    public const STATUS_FILTER_ACTIVE = 'active';
     public const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
 
     protected $table = 'tickets';
@@ -76,6 +77,11 @@ class Ticket
         $where = [];
         $data = [];
 
+        if (($filters['status'] ?? '') === self::STATUS_FILTER_ACTIVE)
+        {
+            $where[] = "tickets.status not in ('resolved', 'closed')";
+        }
+        else
         if (!empty($filters['status']) && $this->isValidStatus((string)$filters['status']))
         {
             $where[] = 'tickets.status = :status';
@@ -167,6 +173,11 @@ class Ticket
     public function isValidStatus(string $status): bool
     {
         return in_array($status, self::STATUSES, true);
+    }
+
+    public function isValidStaffStatusFilter(string $status): bool
+    {
+        return $status === '' || $status === self::STATUS_FILTER_ACTIVE || $this->isValidStatus($status);
     }
 
     public function isStaffSettableStatus(string $status): bool
