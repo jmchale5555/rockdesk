@@ -16,14 +16,16 @@
     <?php endif; ?>
 
     <form method="post" action="<?= ROOT ?>/users/update/<?= (int)$user->id ?>">
+        <?= csrf_field() ?>
+
         <label for="name">Name</label>
-        <input type="text" name="name" id="name" value="<?= esc(old_value('name', $user->name)); ?>" required>
+        <input type="text" name="name" id="name" value="<?= esc(old_value('name', $user->name)); ?>" maxlength="120" required>
 
         <label for="username">Username</label>
-        <input type="text" name="username" id="username" value="<?= esc(old_value('username', $user->username)); ?>" required>
+        <input type="text" name="username" id="username" value="<?= esc(old_value('username', $user->username)); ?>" maxlength="100" required>
 
         <label for="email">Email</label>
-        <input type="email" name="email" id="email" value="<?= esc(old_value('email', $user->email)); ?>">
+        <input type="email" name="email" id="email" value="<?= esc(old_value('email', $user->email)); ?>" maxlength="190">
 
         <label for="role">Role</label>
         <select name="role" id="role" required>

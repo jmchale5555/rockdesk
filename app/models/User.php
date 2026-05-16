@@ -60,6 +60,11 @@ class User
             $this->errors['name'] = "Name is required";
         }
         else
+        if (mb_strlen((string)$data['name']) > 120)
+        {
+            $this->errors['name'] = "Name must be 120 characters or fewer";
+        }
+        else
         if (empty($data['username']))
         {
             $this->errors['username'] = "Username is required";
@@ -73,6 +78,11 @@ class User
         if (!empty($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL))
         {
             $this->errors['email'] = "Enter a valid email address";
+        }
+        else
+        if (!empty($data['email']) && mb_strlen((string)$data['email']) > 190)
+        {
+            $this->errors['email'] = "Email must be 190 characters or fewer";
         }
 
         if (empty($data['password']))
@@ -137,6 +147,11 @@ class User
         {
             $this->errors['name'] = "Name is required";
         }
+        else
+        if (mb_strlen((string)$data['name']) > 120)
+        {
+            $this->errors['name'] = "Name must be 120 characters or fewer";
+        }
 
         if (empty($data['username']))
         {
@@ -151,6 +166,11 @@ class User
         if (!empty($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL))
         {
             $this->errors['email'] = "Enter a valid email address";
+        }
+        else
+        if (!empty($data['email']) && mb_strlen((string)$data['email']) > 190)
+        {
+            $this->errors['email'] = "Email must be 190 characters or fewer";
         }
 
         if (empty($data['role']) || !$this->isValidRole((string)$data['role']))

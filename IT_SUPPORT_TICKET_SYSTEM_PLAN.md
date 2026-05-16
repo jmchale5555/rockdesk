@@ -392,21 +392,21 @@ Purpose: improve UX without changing the server-rendered architecture.
 
 Purpose: make the MVP safe enough for real internal use.
 
-- [ ] Escape all user-generated output with `esc()`.
-- [ ] Validate role values server-side.
-- [ ] Validate status values server-side.
-- [ ] Validate priority values server-side.
-- [ ] Validate assignment target is staff/admin.
-- [ ] Validate ticket ownership on every user ticket route.
-- [ ] Add CSRF protection for POST routes.
-- [ ] Add form token helper.
-- [ ] Add CSRF validation helper.
-- [ ] Add max lengths for subject, username, name, and email.
-- [ ] Add practical max length for ticket body and comments.
-- [ ] Add inactive-user access block.
-- [ ] Add final-admin protection.
-- [ ] Ensure LDAP passwords are never stored when LDAP phase is implemented.
-- [ ] Ensure closed tickets are read-only.
+- [x] Escape all user-generated output with `esc()`.
+- [x] Validate role values server-side.
+- [x] Validate status values server-side.
+- [x] Validate priority values server-side.
+- [x] Validate assignment target is staff/admin.
+- [x] Validate ticket ownership on every user ticket route.
+- [x] Add CSRF protection for POST routes.
+- [x] Add form token helper.
+- [x] Add CSRF validation helper.
+- [x] Add max lengths for subject, username, name, and email.
+- [x] Add practical max length for ticket body and comments.
+- [x] Add inactive-user access block.
+- [x] Add final-admin protection.
+- [x] Ensure LDAP passwords are never stored when LDAP phase is implemented.
+- [x] Ensure closed tickets are read-only.
 
 ## Phase 12 - Microsoft Active Directory / LDAPS Future Phase
 

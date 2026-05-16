@@ -107,4 +107,20 @@ final class UserTest extends TestCase
         $this->assertArrayHasKey('email', $user->errors);
         $this->assertArrayHasKey('role', $user->errors);
     }
+
+    public function testAdminValidationRejectsOverlongNameAndEmail(): void
+    {
+        $user = new User;
+
+        $this->assertFalse($user->validateAdminUpdate([
+            'name' => str_repeat('a', 121),
+            'username' => 'jane.smith',
+            'email' => str_repeat('a', 180) . '@example.com',
+            'role' => 'user',
+            'is_active' => 1,
+            'password' => '',
+        ]));
+        $this->assertArrayHasKey('name', $user->errors);
+        $this->assertArrayHasKey('email', $user->errors);
+    }
 }

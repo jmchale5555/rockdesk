@@ -36,6 +36,8 @@ class Users
             redirect('users/create');
         }
 
+        require_csrf();
+
         $user = new User;
         $data = $this->userDataFromPost($user, true);
 
@@ -106,6 +108,8 @@ class Users
         {
             redirect('users/edit/' . (int)$row->id);
         }
+
+        require_csrf();
 
         $data = $this->userDataFromPost($user, false);
 

@@ -20,6 +20,8 @@ class Login
 
         if ($_SERVER['REQUEST_METHOD'] == "POST")
         {
+            require_csrf();
+
             $user = new User;
             $arr['username'] = $user->normalizeUsername((string)($_POST['username'] ?? ''));
 

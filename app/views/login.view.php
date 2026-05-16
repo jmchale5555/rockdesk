@@ -10,6 +10,8 @@
     <?php endif; ?>
 
     <form method="post">
+        <?= csrf_field() ?>
+
         <label for="username">Username</label>
         <input type="text" name="username" id="username" value="<?= esc(old_value('username')); ?>" autocomplete="username" required>
 

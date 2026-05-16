@@ -152,6 +152,11 @@ class Ticket
         {
             $this->errors['body'] = 'Ticket details are required';
         }
+        else
+        if (mb_strlen(trim((string)$data['body'])) > 20000)
+        {
+            $this->errors['body'] = 'Ticket details must be 20000 characters or fewer';
+        }
 
         return empty($this->errors);
     }
@@ -206,6 +211,11 @@ class Ticket
         if ($status === 'resolved' && trim($comment) === '')
         {
             $this->errors['resolution_comment'] = 'Resolution comment is required when resolving a ticket';
+        }
+        else
+        if (mb_strlen(trim($comment)) > 10000)
+        {
+            $this->errors['resolution_comment'] = 'Resolution comment must be 10000 characters or fewer';
         }
 
         return empty($this->errors);

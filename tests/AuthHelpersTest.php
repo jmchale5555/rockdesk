@@ -7,6 +7,33 @@ final class AuthHelpersTest extends TestCase
     protected function tearDown(): void
     {
         unset($_SESSION['USER']);
+        unset($_SESSION['CSRF_TOKEN']);
+    }
+
+    public function testCsrfTokenIsGeneratedAndReused(): void
+    {
+        $token = csrf_token();
+
+        $this->assertNotEmpty($token);
+        $this->assertSame($token, csrf_token());
+        $this->assertTrue(csrf_token_is_valid($token));
+    }
+
+    public function testCsrfTokenRejectsMissingOrWrongToken(): void
+    {
+        csrf_token();
+
+        $this->assertFalse(csrf_token_is_valid(null));
+        $this->assertFalse(csrf_token_is_valid('wrong-token'));
+    }
+
+    public function testCsrfFieldRendersHiddenInput(): void
+    {
+        $field = csrf_field();
+
+        $this->assertStringContainsString('type="hidden"', $field);
+        $this->assertStringContainsString('name="csrf_token"', $field);
+        $this->assertStringContainsString(csrf_token(), $field);
     }
 
     public function testCurrentUserHelpersReturnSessionUserDetails(): void

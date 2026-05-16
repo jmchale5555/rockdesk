@@ -17,11 +17,13 @@
         hx-select-oob="#site-nav"
         hx-swap="innerHTML"
         hx-push-url="true">
+        <?= csrf_field() ?>
+
         <label for="subject">Subject</label>
         <input type="text" name="subject" id="subject" value="<?= esc(old_value('subject')); ?>" maxlength="190" required>
 
         <label for="body">Details</label>
-        <textarea name="body" id="body" rows="8" required><?= esc(old_value('body')); ?></textarea>
+        <textarea name="body" id="body" rows="8" maxlength="20000" required><?= esc(old_value('body')); ?></textarea>
 
         <button type="submit">Submit ticket</button>
         <a href="<?= ROOT ?>/tickets"

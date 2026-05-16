@@ -60,6 +60,18 @@ final class TicketTest extends TestCase
         $this->assertArrayHasKey('subject', $ticket->errors);
     }
 
+    public function testTicketBodyHasPracticalLengthLimit(): void
+    {
+        $ticket = new Ticket;
+
+        $this->assertFalse($ticket->validateCreate([
+            'user_id' => 12,
+            'subject' => 'Long body',
+            'body' => str_repeat('a', 20001),
+        ]));
+        $this->assertArrayHasKey('body', $ticket->errors);
+    }
+
     public function testTicketStatusValidationIncludesClosedButStaffCannotSetClosed(): void
     {
         $ticket = new Ticket;
@@ -89,6 +101,9 @@ final class TicketTest extends TestCase
 
         $this->assertTrue($ticket->validateResolutionComment('resolved', 'Issue fixed by reinstalling the driver.'));
         $this->assertTrue($ticket->validateResolutionComment('in_progress', ''));
+
+        $this->assertFalse($ticket->validateResolutionComment('resolved', str_repeat('a', 10001)));
+        $this->assertArrayHasKey('resolution_comment', $ticket->errors);
     }
 
     public function testStatusUpdateDataSetsAndClearsResolvedAt(): void
@@ -190,6 +205,18 @@ final class TicketTest extends TestCase
             'body' => 'I have tried restarting.',
             'is_internal' => 0,
         ]));
+    }
+
+    public function testTicketCommentBodyHasPracticalLengthLimit(): void
+    {
+        $comment = new TicketComment;
+
+        $this->assertFalse($comment->validateCreate([
+            'ticket_id' => 4,
+            'user_id' => 7,
+            'body' => str_repeat('a', 10001),
+        ]));
+        $this->assertArrayHasKey('body', $comment->errors);
     }
 
     public function testTicketEventValidationAcceptsKnownEventTypesOnly(): void

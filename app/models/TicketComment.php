@@ -35,6 +35,11 @@ class TicketComment
         {
             $this->errors['body'] = 'Comment is required';
         }
+        else
+        if (mb_strlen(trim((string)$data['body'])) > 10000)
+        {
+            $this->errors['body'] = 'Comment must be 10000 characters or fewer';
+        }
 
         if (isset($data['is_internal']) && !in_array((int)$data['is_internal'], [0, 1], true))
         {

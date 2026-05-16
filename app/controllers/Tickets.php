@@ -53,6 +53,8 @@ class Tickets
             redirect('tickets/create');
         }
 
+        require_csrf();
+
         $ticket = new Ticket;
         $ticketNumber = $ticket->nextTicketNumber();
         $data = $ticket->makeCreateData(
@@ -124,6 +126,8 @@ class Tickets
             redirect('tickets/show/' . (int)$id);
         }
 
+        require_csrf();
+
         $ticket = new Ticket;
         $row = $ticket->findWithRequester((int)$id);
 
@@ -181,6 +185,8 @@ class Tickets
             redirect('tickets/show/' . (int)$id);
         }
 
+        require_csrf();
+
         $ticket = new Ticket;
         $row = $ticket->findWithRequester((int)$id);
 
@@ -236,6 +242,8 @@ class Tickets
             redirect('tickets/show/' . (int)$id);
         }
 
+        require_csrf();
+
         $ticket = new Ticket;
         $row = $ticket->findWithRequester((int)$id);
 
@@ -273,6 +281,8 @@ class Tickets
         {
             redirect('tickets/show/' . (int)$id);
         }
+
+        require_csrf();
 
         $ticket = new Ticket;
         $row = $ticket->findWithRequester((int)$id);

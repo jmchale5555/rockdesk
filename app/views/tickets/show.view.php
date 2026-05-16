@@ -74,8 +74,10 @@
             hx-select="#page-content > *"
             hx-select-oob="#site-nav"
             hx-swap="innerHTML">
+            <?= csrf_field() ?>
+
             <label for="body">Add reply</label>
-            <textarea name="body" id="body" rows="5" required><?= esc(old_value('body')) ?></textarea>
+            <textarea name="body" id="body" rows="5" maxlength="10000" required><?= esc(old_value('body')) ?></textarea>
             <button type="submit">Add reply</button>
         </form>
     <?php endif; ?>
@@ -91,6 +93,8 @@
             hx-select="#page-content > *"
             hx-select-oob="#site-nav"
             hx-swap="innerHTML">
+            <?= csrf_field() ?>
+
             <label for="status">Status</label>
             <select name="status" id="status" required>
                 <?php foreach (Model\Ticket::STAFF_SET_STATUSES as $status): ?>
@@ -99,7 +103,7 @@
             </select>
 
             <label for="resolution_comment">Resolution comment</label>
-            <textarea name="resolution_comment" id="resolution_comment" rows="4" placeholder="Required when setting status to resolved"></textarea>
+            <textarea name="resolution_comment" id="resolution_comment" rows="4" maxlength="10000" placeholder="Required when setting status to resolved"></textarea>
 
             <button type="submit">Update status</button>
         </form>
@@ -110,6 +114,8 @@
             hx-select="#page-content > *"
             hx-select-oob="#site-nav"
             hx-swap="innerHTML">
+            <?= csrf_field() ?>
+
             <label for="priority">Priority</label>
             <select name="priority" id="priority" required>
                 <?php foreach (Model\Ticket::PRIORITIES as $priority): ?>
@@ -126,6 +132,8 @@
             hx-select="#page-content > *"
             hx-select-oob="#site-nav"
             hx-swap="innerHTML">
+            <?= csrf_field() ?>
+
             <label for="assigned_to">Assigned staff</label>
             <select name="assigned_to" id="assigned_to">
                 <option value="0">Unassigned</option>

@@ -23,6 +23,8 @@
         <p>Your password is managed by your directory account. Please change it in Active Directory.</p>
     <?php else: ?>
         <form method="post">
+            <?= csrf_field() ?>
+
             <label for="current_password">Current password</label>
             <div class="password-input-wrap">
                 <input x-bind:type="showCurrent ? 'text' : 'password'" name="current_password" id="current_password" autocomplete="current-password" required>

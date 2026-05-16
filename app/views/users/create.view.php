@@ -11,14 +11,16 @@
     <?php endif; ?>
 
     <form method="post" action="<?= ROOT ?>/users/store">
+        <?= csrf_field() ?>
+
         <label for="name">Name</label>
-        <input type="text" name="name" id="name" value="<?= esc(old_value('name')); ?>" required>
+        <input type="text" name="name" id="name" value="<?= esc(old_value('name')); ?>" maxlength="120" required>
 
         <label for="username">Username</label>
-        <input type="text" name="username" id="username" value="<?= esc(old_value('username')); ?>" required>
+        <input type="text" name="username" id="username" value="<?= esc(old_value('username')); ?>" maxlength="100" required>
 
         <label for="email">Email</label>
-        <input type="email" name="email" id="email" value="<?= esc(old_value('email')); ?>">
+        <input type="email" name="email" id="email" value="<?= esc(old_value('email')); ?>" maxlength="190">
 
         <label for="role">Role</label>
         <select name="role" id="role" required>
