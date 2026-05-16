@@ -12,6 +12,7 @@ return [
                 stored_name VARCHAR(190) NOT NULL,
                 mime_type VARCHAR(100) NOT NULL,
                 file_size INT UNSIGNED NOT NULL,
+                is_inline TINYINT(1) NOT NULL DEFAULT 0,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
                 UNIQUE KEY uq_ticket_attachments_stored_name (stored_name),

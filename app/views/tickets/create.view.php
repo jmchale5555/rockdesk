@@ -23,7 +23,8 @@
         <input type="text" name="subject" id="subject" value="<?= esc(old_value('subject')); ?>" maxlength="190" required>
 
         <label for="body">Details</label>
-        <textarea name="body" id="body" rows="8" maxlength="20000" required><?= esc(old_value('body')); ?></textarea>
+        <input type="hidden" name="body" id="body" value="<?= esc(old_value('body')); ?>">
+        <trix-editor input="body" class="rich-text-editor"></trix-editor>
 
         <div class="form-actions">
             <button type="submit">Submit ticket</button>

@@ -61,7 +61,7 @@ class Tickets
         $data = $ticket->makeCreateData(
             (int)current_user_id(),
             (string)($_POST['subject'] ?? ''),
-            (string)($_POST['body'] ?? ''),
+            sanitize_rich_text((string)($_POST['body'] ?? '')),
             $ticketNumber
         );
 
@@ -116,7 +116,7 @@ class Tickets
             'ticket' => $row,
             'staffUsers' => $user->listAssignableStaff() ?: [],
             'comments' => $comment->listVisibleForTicket((int)$row->id, is_staff_or_admin()) ?: [],
-            'attachments' => $attachment->listForTicket((int)$row->id) ?: [],
+            'attachments' => $attachment->listForTicket((int)$row->id, false) ?: [],
         ]);
     }
 
@@ -153,7 +153,7 @@ class Tickets
         $data = [
             'ticket_id' => (int)$row->id,
             'user_id' => (int)current_user_id(),
-            'body' => (string)($_POST['body'] ?? ''),
+            'body' => sanitize_rich_text((string)($_POST['body'] ?? '')),
             'is_internal' => 0,
             'created_at' => date('Y-m-d H:i:s'),
         ];
@@ -210,7 +210,7 @@ class Tickets
         $data = [
             'ticket_id' => (int)$row->id,
             'user_id' => (int)current_user_id(),
-            'body' => (string)($_POST['internal_body'] ?? ''),
+            'body' => sanitize_rich_text((string)($_POST['internal_body'] ?? '')),
             'is_internal' => 1,
             'created_at' => date('Y-m-d H:i:s'),
         ];
@@ -228,6 +228,105 @@ class Tickets
         $this->recordEvent((int)$row->id, 'internal_note_added', null, null, trim($data['body']));
 
         message('Internal note added.');
+        redirect('tickets/show/' . (int)$row->id);
+    }
+
+    public function message($id = '')
+    {
+        require_login();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST')
+        {
+            redirect('tickets/show/' . (int)$id);
+        }
+
+        require_csrf();
+
+        $ticket = new Ticket;
+        $row = $ticket->findWithRequester((int)$id);
+
+        if (!$row)
+        {
+            http_response_code(404);
+            $this->view('404');
+            return;
+        }
+
+        require_ticket_access($row);
+
+        if (!$ticket->canReply($row))
+        {
+            $this->renderShowWithErrors($row, ['message' => 'Closed tickets are read-only']);
+            return;
+        }
+
+        $isStaff = is_staff_or_admin();
+        $body = sanitize_rich_text((string)($_POST['body'] ?? ''));
+        $isInternal = $isStaff && !empty($_POST['is_internal']);
+        $newStatus = $isStaff ? (string)($_POST['status'] ?? $row->status) : (string)$row->status;
+        $statusChanged = $isStaff && $newStatus !== (string)$row->status;
+
+        if ($isStaff && $statusChanged && !$ticket->validateStatus($newStatus, true))
+        {
+            $this->renderShowWithErrors($row, $ticket->errors, $this->messageFormData($body, $isInternal, $newStatus));
+            return;
+        }
+
+        if (!$ticket->validateMessageComposer($newStatus, $body, $isInternal, $statusChanged))
+        {
+            $this->renderShowWithErrors($row, $ticket->errors, $this->messageFormData($body, $isInternal, $newStatus));
+            return;
+        }
+
+        $plainBody = rich_text_to_plain_text($body);
+        $hasMessage = $plainBody !== '';
+
+        if ($statusChanged)
+        {
+            $ticket->update((int)$row->id, $ticket->statusUpdateData((string)$row->status, $newStatus));
+            $this->recordEvent((int)$row->id, 'status_changed', (string)$row->status, $newStatus, $newStatus === 'resolved' ? $body : null);
+        }
+
+        if ($hasMessage)
+        {
+            $comment = new TicketComment;
+            $commentData = [
+                'ticket_id' => (int)$row->id,
+                'user_id' => (int)current_user_id(),
+                'body' => $body,
+                'is_internal' => $newStatus === 'resolved' ? 0 : ($isInternal ? 1 : 0),
+                'created_at' => date('Y-m-d H:i:s'),
+            ];
+
+            if (!$comment->validateCreate($commentData))
+            {
+                $this->renderShowWithErrors($row, $comment->errors, $this->messageFormData($body, $isInternal, $newStatus));
+                return;
+            }
+
+            $comment->insert($commentData);
+
+            if (!$statusChanged)
+            {
+                $update = $ticket->replyUpdateData($row, current_user());
+                $ticket->update((int)$row->id, $update);
+
+                if (($update['status'] ?? '') === 'open')
+                {
+                    $this->recordEvent((int)$row->id, 'reopened_by_user_reply', (string)$row->status, 'open');
+                }
+            }
+
+            $this->recordEvent(
+                (int)$row->id,
+                (int)$commentData['is_internal'] === 1 ? 'internal_note_added' : 'commented',
+                null,
+                null,
+                trim($body)
+            );
+        }
+
+        message($this->messageSuccessText($hasMessage, $statusChanged));
         redirect('tickets/show/' . (int)$row->id);
     }
 
@@ -260,42 +359,66 @@ class Tickets
             return;
         }
 
-        $attachment = new TicketAttachment;
         $file = $_FILES['attachment'] ?? [];
 
-        if (!$attachment->validateUpload($file))
+        $createdAttachment = $this->saveAttachment($row, $file, false);
+
+        if (!$createdAttachment)
         {
-            $this->renderShowWithErrors($row, $attachment->errors);
+            $this->renderShowWithErrors($row, ['attachment' => 'Image upload failed']);
             return;
         }
-
-        $mimeType = $attachment->detectMimeType((string)$file['tmp_name']);
-        $storedName = bin2hex(random_bytes(16)) . '.' . $attachment->extensionForMimeType($mimeType);
-        $storagePath = $this->attachmentStoragePath($storedName);
-
-        if (!$this->ensureAttachmentStorage() || !move_uploaded_file((string)$file['tmp_name'], $storagePath))
-        {
-            $this->renderShowWithErrors($row, ['attachment' => 'Image could not be saved']);
-            return;
-        }
-
-        $originalName = $attachment->safeOriginalName((string)($file['name'] ?? 'image'));
-        $attachment->insert([
-            'ticket_id' => (int)$row->id,
-            'user_id' => (int)current_user_id(),
-            'original_name' => $originalName,
-            'stored_name' => $storedName,
-            'mime_type' => $mimeType,
-            'file_size' => (int)$file['size'],
-            'created_at' => date('Y-m-d H:i:s'),
-        ]);
-        $ticket->update((int)$row->id, [
-            'updated_at' => date('Y-m-d H:i:s'),
-        ]);
-        $this->recordEvent((int)$row->id, 'attachment_uploaded', null, $originalName);
 
         message('Image attached successfully.');
         redirect('tickets/show/' . (int)$row->id);
+    }
+
+    public function inlineupload($id = '')
+    {
+        require_login();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST')
+        {
+            http_response_code(405);
+            $this->json(['error' => 'Method not allowed']);
+            return;
+        }
+
+        require_csrf();
+
+        $ticket = new Ticket;
+        $row = $ticket->findWithRequester((int)$id);
+
+        if (!$row)
+        {
+            http_response_code(404);
+            $this->json(['error' => 'Ticket not found']);
+            return;
+        }
+
+        require_ticket_access($row);
+
+        if (!$ticket->canReply($row))
+        {
+            http_response_code(422);
+            $this->json(['error' => 'Closed tickets are read-only']);
+            return;
+        }
+
+        $createdAttachment = $this->saveAttachment($row, $_FILES['attachment'] ?? [], true);
+
+        if (!$createdAttachment)
+        {
+            http_response_code(422);
+            $this->json(['error' => 'Image upload failed']);
+            return;
+        }
+
+        $url = ROOT . '/tickets/attachment/' . (int)$createdAttachment->id;
+        $this->json([
+            'url' => $url,
+            'href' => $url,
+        ]);
     }
 
     public function attachment($id = '')
@@ -361,7 +484,7 @@ class Tickets
         }
 
         $newStatus = (string)($_POST['status'] ?? '');
-        $resolutionComment = trim((string)($_POST['resolution_comment'] ?? ''));
+        $resolutionComment = sanitize_rich_text((string)($_POST['resolution_comment'] ?? ''));
 
         $ticket->validateStatus($newStatus, true);
         if (empty($ticket->errors))
@@ -491,7 +614,7 @@ class Tickets
         ]);
     }
 
-    private function renderShowWithErrors(mixed $ticketRow, array $errors): void
+    private function renderShowWithErrors(mixed $ticketRow, array $errors, array $formData = []): void
     {
         $user = new User;
         $comment = new TicketComment;
@@ -500,9 +623,34 @@ class Tickets
             'ticket' => $ticketRow,
             'staffUsers' => $user->listAssignableStaff() ?: [],
             'comments' => $comment->listVisibleForTicket((int)$ticketRow->id, is_staff_or_admin()) ?: [],
-            'attachments' => $attachment->listForTicket((int)$ticketRow->id) ?: [],
+            'attachments' => $attachment->listForTicket((int)$ticketRow->id, false) ?: [],
             'errors' => $errors,
+            'formData' => $formData,
         ]);
+    }
+
+    private function messageFormData(string $body, bool $isInternal, string $status): array
+    {
+        return [
+            'body' => $body,
+            'is_internal' => $isInternal ? '1' : '0',
+            'status' => $status,
+        ];
+    }
+
+    private function messageSuccessText(bool $hasMessage, bool $statusChanged): string
+    {
+        if ($hasMessage && $statusChanged)
+        {
+            return 'Ticket updated and message added.';
+        }
+
+        if ($statusChanged)
+        {
+            return 'Ticket status updated.';
+        }
+
+        return 'Message added successfully.';
     }
 
     private function ensureAttachmentStorage(): bool
@@ -515,5 +663,54 @@ class Tickets
     private function attachmentStoragePath(string $storedName): string
     {
         return ROOTPATH . '../storage/ticket-attachments/' . basename($storedName);
+    }
+
+    private function saveAttachment(mixed $ticketRow, array $file, bool $isInline): mixed
+    {
+        $attachment = new TicketAttachment;
+
+        if (!$attachment->validateUpload($file))
+        {
+            return false;
+        }
+
+        $mimeType = $attachment->detectMimeType((string)$file['tmp_name']);
+        $storedName = bin2hex(random_bytes(16)) . '.' . $attachment->extensionForMimeType($mimeType);
+        $storagePath = $this->attachmentStoragePath($storedName);
+
+        if (!$this->ensureAttachmentStorage() || !move_uploaded_file((string)$file['tmp_name'], $storagePath))
+        {
+            $attachment->errors['attachment'] = 'Image could not be saved';
+            return false;
+        }
+
+        $ticket = new Ticket;
+        $originalName = $attachment->safeOriginalName((string)($file['name'] ?? 'image'));
+        $attachment->insert([
+            'ticket_id' => (int)$ticketRow->id,
+            'user_id' => (int)current_user_id(),
+            'original_name' => $originalName,
+            'stored_name' => $storedName,
+            'mime_type' => $mimeType,
+            'file_size' => (int)$file['size'],
+            'is_inline' => $isInline ? 1 : 0,
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+        $ticket->update((int)$ticketRow->id, [
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $this->recordEvent((int)$ticketRow->id, 'attachment_uploaded', null, $originalName);
+
+        return $attachment->get_row(
+            'select * from ticket_attachments where stored_name = :stored_name limit 1',
+            ['stored_name' => $storedName]
+        );
+    }
+
+    private function json(array $data): void
+    {
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
     }
 }

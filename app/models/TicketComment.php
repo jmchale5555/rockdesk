@@ -31,12 +31,15 @@ class TicketComment
             $this->errors['user_id'] = 'A commenter is required';
         }
 
-        if (empty(trim((string)($data['body'] ?? ''))))
+        $body = (string)($data['body'] ?? '');
+        $plainBody = rich_text_to_plain_text($body);
+
+        if ($plainBody === '')
         {
             $this->errors['body'] = 'Comment is required';
         }
         else
-        if (mb_strlen(trim((string)$data['body'])) > 10000)
+        if (mb_strlen(trim($body)) > 10000)
         {
             $this->errors['body'] = 'Comment must be 10000 characters or fewer';
         }

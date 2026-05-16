@@ -49,7 +49,7 @@ class Ticket
             'user_id' => $userId,
             'assigned_to' => null,
             'subject' => trim($subject),
-            'body' => trim($body),
+            'body' => sanitize_rich_text($body),
             'status' => 'new',
             'priority' => 'normal',
             'created_at' => $now,
@@ -148,12 +148,15 @@ class Ticket
             $this->errors['subject'] = 'Subject must be 190 characters or fewer';
         }
 
-        if (empty(trim((string)($data['body'] ?? ''))))
+        $body = (string)($data['body'] ?? '');
+        $plainBody = rich_text_to_plain_text($body);
+
+        if ($plainBody === '')
         {
             $this->errors['body'] = 'Ticket details are required';
         }
         else
-        if (mb_strlen(trim((string)$data['body'])) > 20000)
+        if (mb_strlen(trim($body)) > 20000)
         {
             $this->errors['body'] = 'Ticket details must be 20000 characters or fewer';
         }
@@ -208,7 +211,9 @@ class Ticket
     {
         $this->errors = [];
 
-        if ($status === 'resolved' && trim($comment) === '')
+        $plainComment = rich_text_to_plain_text($comment);
+
+        if ($status === 'resolved' && $plainComment === '')
         {
             $this->errors['resolution_comment'] = 'Resolution comment is required when resolving a ticket';
         }
@@ -216,6 +221,34 @@ class Ticket
         if (mb_strlen(trim($comment)) > 10000)
         {
             $this->errors['resolution_comment'] = 'Resolution comment must be 10000 characters or fewer';
+        }
+
+        return empty($this->errors);
+    }
+
+    public function validateMessageComposer(string $status, string $body, bool $isInternal, bool $statusChanged): bool
+    {
+        $this->errors = [];
+        $plainBody = rich_text_to_plain_text($body);
+
+        if ($status === 'resolved' && $isInternal)
+        {
+            $this->errors['message'] = 'Resolution messages cannot be private. Uncheck private note to resolve this ticket.';
+        }
+        else
+        if ($status === 'resolved' && $plainBody === '')
+        {
+            $this->errors['message'] = 'Resolution text is required when resolving a ticket.';
+        }
+        else
+        if (!$statusChanged && $plainBody === '')
+        {
+            $this->errors['message'] = 'Enter a message.';
+        }
+
+        if (mb_strlen(trim($body)) > 10000)
+        {
+            $this->errors['message'] = 'Message must be 10000 characters or fewer';
         }
 
         return empty($this->errors);

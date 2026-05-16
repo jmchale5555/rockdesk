@@ -1,7 +1,9 @@
 <?php
 
 define('ROOTPATH', __DIR__ . '/../public/');
+define('ROOT', 'http://localhost');
 
+require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../app/core/Session.php';
 require_once __DIR__ . '/../app/core/functions.php';
 require_once __DIR__ . '/../app/core/Database.php';

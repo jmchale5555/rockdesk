@@ -57,7 +57,7 @@
     <hr>
 
     <h2>Request</h2>
-    <p><?= nl2br(esc($ticket->body)) ?></p>
+    <div class="rich-text-content"><?= render_rich_text((string)$ticket->body) ?></div>
 
     <hr>
 
@@ -75,7 +75,7 @@
                     <?php endif; ?>
                     <small><?= esc($comment->username) ?> · <?= esc($comment->role) ?> · <?= esc($comment->created_at) ?></small>
                 </header>
-                <p><?= nl2br(esc($comment->body)) ?></p>
+                <div class="rich-text-content"><?= render_rich_text((string)$comment->body) ?></div>
             </article>
         <?php endforeach; ?>
     <?php endif; ?>
@@ -100,82 +100,74 @@
     <?php if ($ticket->status === 'closed'): ?>
         <p><mark>This ticket is closed and read-only.</mark></p>
     <?php else: ?>
-        <form method="post" action="<?= ROOT ?>/tickets/upload/<?= (int)$ticket->id ?>" enctype="multipart/form-data">
-            <?= csrf_field() ?>
-
-            <label for="attachment">Attach image</label>
-            <input type="hidden" name="MAX_FILE_SIZE" value="5242880">
-            <input type="file" name="attachment" id="attachment" accept="image/jpeg,image/png,image/webp" required>
-            <small>JPG, PNG, or WebP. Maximum 5 MB.</small>
-
-            <div class="form-actions">
-                <button type="submit">Upload image</button>
-            </div>
-        </form>
-
-        <hr class="section-divider">
-
-        <form method="post" action="<?= ROOT ?>/tickets/reply/<?= (int)$ticket->id ?>"
-            hx-post="<?= ROOT ?>/tickets/reply/<?= (int)$ticket->id ?>"
+        <?php
+            $messageBody = $formData['body'] ?? old_value('body');
+            $selectedMessageStatus = $formData['status'] ?? $ticket->status;
+            $messageIsInternal = ($formData['is_internal'] ?? '0') === '1';
+            $messageError = $errors['message'] ?? '';
+        ?>
+        <form method="post" action="<?= ROOT ?>/tickets/message/<?= (int)$ticket->id ?>"
+            class="ticket-message-composer"
+            data-message-composer
+            hx-post="<?= ROOT ?>/tickets/message/<?= (int)$ticket->id ?>"
             hx-target="#page-content"
             hx-select="#page-content > *"
             hx-select-oob="#site-nav"
             hx-swap="innerHTML">
             <?= csrf_field() ?>
 
-            <label for="body">Add reply</label>
-            <textarea name="body" id="body" rows="5" maxlength="10000" required><?= esc(old_value('body')) ?></textarea>
+            <?php if (is_staff_or_admin()): ?>
+                <label for="message_status">Status</label>
+                <select name="status" id="message_status" data-message-status required>
+                    <?php if (!in_array($ticket->status, Model\Ticket::STAFF_SET_STATUSES, true)): ?>
+                        <option value="<?= esc($ticket->status) ?>" <?= $selectedMessageStatus === $ticket->status ? 'selected' : '' ?>>Keep <?= esc(str_replace('_', ' ', $ticket->status)) ?></option>
+                    <?php endif; ?>
+                    <?php foreach (Model\Ticket::STAFF_SET_STATUSES as $status): ?>
+                        <option value="<?= esc($status) ?>" <?= $selectedMessageStatus === $status ? 'selected' : '' ?>><?= esc(str_replace('_', ' ', $status)) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            <?php endif; ?>
+
+            <label for="body">Message</label>
+            <input type="hidden" name="body" id="body" value="<?= esc($messageBody) ?>" data-message-body>
+            <trix-editor input="body" class="rich-text-editor <?= !empty($messageError) ? 'is-invalid' : '' ?>" data-message-editor data-upload-url="<?= ROOT ?>/tickets/inlineupload/<?= (int)$ticket->id ?>"></trix-editor>
+            <small>Tip: drag or paste screenshots directly into your message.</small>
+            <p class="form-error" data-message-error <?= empty($messageError) ? 'hidden' : '' ?>><?= esc($messageError) ?></p>
+
+            <?php if (is_staff_or_admin()): ?>
+                <label class="message-private-toggle">
+                    <input type="checkbox" name="is_internal" value="1" data-message-private <?= $messageIsInternal ? 'checked' : '' ?>>
+                    Private staff-only note
+                </label>
+                <small data-resolution-public-help hidden>Resolution messages are visible to the requester.</small>
+            <?php endif; ?>
+
             <div class="form-actions">
-                <button type="submit">Add reply</button>
+                <button type="submit"><?= is_staff_or_admin() ? 'Update ticket' : 'Add reply' ?></button>
             </div>
         </form>
+
+        <details class="separate-attachment-panel" hidden>
+            <summary>Attach image separately</summary>
+            <form method="post" action="<?= ROOT ?>/tickets/upload/<?= (int)$ticket->id ?>" enctype="multipart/form-data">
+                <?= csrf_field() ?>
+
+                <label for="attachment">Image file</label>
+                <input type="hidden" name="MAX_FILE_SIZE" value="5242880">
+                <input type="file" name="attachment" id="attachment" accept="image/jpeg,image/png,image/webp" required>
+                <small>Prefer dragging or pasting screenshots into the message above. Use this only when an image needs to stand alone.</small>
+
+                <div class="form-actions">
+                    <button type="submit">Upload separate image</button>
+                </div>
+            </form>
+        </details>
     <?php endif; ?>
 
     <?php if (is_staff_or_admin()): ?>
         <hr>
 
         <h2>Staff controls</h2>
-
-        <?php if ($ticket->status !== 'closed'): ?>
-            <form method="post" action="<?= ROOT ?>/tickets/internal/<?= (int)$ticket->id ?>"
-                hx-post="<?= ROOT ?>/tickets/internal/<?= (int)$ticket->id ?>"
-                hx-target="#page-content"
-                hx-select="#page-content > *"
-                hx-select-oob="#site-nav"
-                hx-swap="innerHTML">
-                <?= csrf_field() ?>
-
-                <label for="internal_body">Internal note</label>
-                <textarea name="internal_body" id="internal_body" rows="4" maxlength="10000" placeholder="Visible to staff and admins only" required><?= esc(old_value('internal_body')) ?></textarea>
-
-                <div class="form-actions">
-                    <button type="submit">Add internal note</button>
-                </div>
-            </form>
-        <?php endif; ?>
-
-        <form method="post" action="<?= ROOT ?>/tickets/status/<?= (int)$ticket->id ?>"
-            hx-post="<?= ROOT ?>/tickets/status/<?= (int)$ticket->id ?>"
-            hx-target="#page-content"
-            hx-select="#page-content > *"
-            hx-select-oob="#site-nav"
-            hx-swap="innerHTML">
-            <?= csrf_field() ?>
-
-            <label for="status">Status</label>
-            <select name="status" id="status" required>
-                <?php foreach (Model\Ticket::STAFF_SET_STATUSES as $status): ?>
-                    <option value="<?= esc($status) ?>" <?= $ticket->status === $status ? 'selected' : '' ?>><?= esc(str_replace('_', ' ', $status)) ?></option>
-                <?php endforeach; ?>
-            </select>
-
-            <label for="resolution_comment">Resolution comment</label>
-            <textarea name="resolution_comment" id="resolution_comment" rows="4" maxlength="10000" placeholder="Required when setting status to resolved"></textarea>
-
-            <div class="form-actions">
-                <button type="submit">Update status</button>
-            </div>
-        </form>
 
         <div class="staff-control-grid">
             <form method="post" action="<?= ROOT ?>/tickets/priority/<?= (int)$ticket->id ?>"

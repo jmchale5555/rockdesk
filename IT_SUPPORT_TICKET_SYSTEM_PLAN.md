@@ -475,12 +475,13 @@ LDAP_TLS_REQUIRE_CERT=true
 
 ### WYSIWYG And Inline Images
 
-- [ ] Choose local editor library with no CDN/runtime internet dependency.
-- [ ] Add server-side HTML sanitizer.
-- [ ] Define allowed tags and attributes.
-- [ ] Treat inline images as attachments.
-- [ ] Ensure inline images belong to the same ticket.
-- [ ] Render sanitized HTML only.
+- [x] Choose local editor library with no CDN/runtime internet dependency.
+- [x] Add server-side HTML sanitizer.
+- [x] Define allowed tags and attributes.
+- [x] Treat inline images as attachments.
+- [x] Ensure inline images belong to the same ticket.
+- [x] Render sanitized HTML only.
+- [x] Disable Trix inline attachments until they can be handled by the app attachment flow.
 
 ### Email Notifications
 

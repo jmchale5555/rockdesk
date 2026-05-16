@@ -1,7 +1,8 @@
 {
     "require": {
         "nesbot/carbon": "^3.8",
-        "directorytree/ldaprecord": "^4.0"
+        "directorytree/ldaprecord": "^4.0",
+        "ezyang/htmlpurifier": "^4.19"
     },
     "require-dev": {
         "phpunit/phpunit": "^12.0"

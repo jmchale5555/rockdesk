@@ -63,6 +63,70 @@ function esc($str = "")
     return htmlspecialchars((string)$str, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+function sanitize_rich_text(string $html): string
+{
+    $html = trim($html);
+
+    if ($html === '')
+    {
+        return '';
+    }
+
+    if (!class_exists(HTMLPurifier::class))
+    {
+        return esc($html);
+    }
+
+    $config = HTMLPurifier_Config::createDefault();
+    $config->set('Cache.DefinitionImpl', null);
+    $config->set('HTML.Allowed', 'div,p,br,strong,b,em,i,del,ul,ol,li,blockquote,pre,a[href],img[src|alt]');
+    $config->set('Attr.AllowedFrameTargets', []);
+    $config->set('HTML.TargetBlank', true);
+    $config->set('HTML.Nofollow', true);
+    $config->set('AutoFormat.AutoParagraph', true);
+    $config->set('AutoFormat.RemoveEmpty', true);
+    $config->set('URI.AllowedSchemes', [
+        'http' => true,
+        'https' => true,
+        'mailto' => true,
+    ]);
+
+    $html = (new HTMLPurifier($config))->purify($html);
+
+    return remove_untrusted_inline_images($html);
+}
+
+function remove_untrusted_inline_images(string $html): string
+{
+    return (string)preg_replace_callback('/<img\b[^>]*\bsrc=("|\')([^"\']+)\1[^>]*>/i', static function (array $matches): string {
+        return is_trusted_inline_image_src(html_entity_decode($matches[2], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')) ? $matches[0] : '';
+    }, $html);
+}
+
+function is_trusted_inline_image_src(string $src): bool
+{
+    $src = trim($src);
+    $root = rtrim(ROOT, '/');
+    $path = '/tickets/attachment/';
+
+    if (str_starts_with($src, $root . $path))
+    {
+        return ctype_digit(substr($src, strlen($root . $path)));
+    }
+
+    return str_starts_with($src, $path) && ctype_digit(substr($src, strlen($path)));
+}
+
+function rich_text_to_plain_text(string $html): string
+{
+    return trim(html_entity_decode(strip_tags(sanitize_rich_text($html)), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+}
+
+function render_rich_text(string $html): string
+{
+    return sanitize_rich_text($html);
+}
+
 function redirect($path)
 {
     header("Location: " . ROOT . "/" . $path);

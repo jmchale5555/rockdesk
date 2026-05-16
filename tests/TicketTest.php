@@ -42,7 +42,7 @@ final class TicketTest extends TestCase
         $this->assertSame(12, $data['user_id']);
         $this->assertNull($data['assigned_to']);
         $this->assertSame('Laptop issue', $data['subject']);
-        $this->assertSame('It stopped booting.', $data['body']);
+        $this->assertSame('<p>It stopped booting.</p>', $data['body']);
         $this->assertSame('new', $data['status']);
         $this->assertSame('normal', $data['priority']);
         $this->assertArrayHasKey('created_at', $data);
@@ -71,6 +71,37 @@ final class TicketTest extends TestCase
             'body' => str_repeat('a', 20001),
         ]));
         $this->assertArrayHasKey('body', $ticket->errors);
+    }
+
+    public function testTicketBodyValidationRejectsEmptyRichText(): void
+    {
+        $ticket = new Ticket;
+
+        $this->assertFalse($ticket->validateCreate([
+            'user_id' => 12,
+            'subject' => 'Empty body',
+            'body' => '<div><br></div>',
+        ]));
+        $this->assertArrayHasKey('body', $ticket->errors);
+    }
+
+    public function testRichTextSanitizerRemovesUnsafeHtml(): void
+    {
+        $html = sanitize_rich_text('<div>Hello <script>alert(1)</script><a href="javascript:alert(2)">bad</a></div>');
+
+        $this->assertStringContainsString('Hello', $html);
+        $this->assertStringNotContainsString('script', $html);
+        $this->assertStringNotContainsString('javascript:', $html);
+    }
+
+    public function testRichTextSanitizerOnlyAllowsLocalInlineAttachmentImages(): void
+    {
+        $html = sanitize_rich_text(
+            '<p>Good</p><img src="http://localhost/tickets/attachment/12" alt="ok"><img src="https://example.com/bad.png" alt="bad">'
+        );
+
+        $this->assertStringContainsString('http://localhost/tickets/attachment/12', $html);
+        $this->assertStringNotContainsString('https://example.com/bad.png', $html);
     }
 
     public function testTicketStatusValidationIncludesClosedButStaffCannotSetClosed(): void
@@ -105,6 +136,37 @@ final class TicketTest extends TestCase
 
         $this->assertFalse($ticket->validateResolutionComment('resolved', str_repeat('a', 10001)));
         $this->assertArrayHasKey('resolution_comment', $ticket->errors);
+    }
+
+    public function testMessageComposerRequiresResolutionTextWhenResolving(): void
+    {
+        $ticket = new Ticket;
+
+        $this->assertFalse($ticket->validateMessageComposer('resolved', '<div><br></div>', false, true));
+        $this->assertSame('Resolution text is required when resolving a ticket.', $ticket->errors['message']);
+    }
+
+    public function testMessageComposerRejectsPrivateResolutionMessage(): void
+    {
+        $ticket = new Ticket;
+
+        $this->assertFalse($ticket->validateMessageComposer('resolved', '<p>Fixed it.</p>', true, true));
+        $this->assertSame('Resolution messages cannot be private. Uncheck private note to resolve this ticket.', $ticket->errors['message']);
+    }
+
+    public function testMessageComposerAllowsStatusOnlyUpdateWhenNotResolving(): void
+    {
+        $ticket = new Ticket;
+
+        $this->assertTrue($ticket->validateMessageComposer('in_progress', '', false, true));
+    }
+
+    public function testMessageComposerRequiresMessageWhenNoStatusChanges(): void
+    {
+        $ticket = new Ticket;
+
+        $this->assertFalse($ticket->validateMessageComposer('open', '', false, false));
+        $this->assertSame('Enter a message.', $ticket->errors['message']);
     }
 
     public function testStatusUpdateDataSetsAndClearsResolvedAt(): void
@@ -289,6 +351,15 @@ final class TicketTest extends TestCase
 
         $this->assertSame('invoice_.png', $attachment->safeOriginalName('../invoice?.png'));
         $this->assertSame('image', $attachment->safeOriginalName(''));
+    }
+
+    public function testTicketAttachmentAllowsInlineColumn(): void
+    {
+        $reflection = new ReflectionClass(TicketAttachment::class);
+        $property = $reflection->getProperty('allowedColumns');
+        $property->setAccessible(true);
+
+        $this->assertContains('is_inline', $property->getValue(new TicketAttachment));
     }
 
     public function testTicketEventValidationAcceptsKnownEventTypesOnly(): void

@@ -22,6 +22,7 @@ class TicketAttachment
         'stored_name',
         'mime_type',
         'file_size',
+        'is_inline',
         'created_at',
     ];
 
@@ -93,13 +94,15 @@ class TicketAttachment
         return mb_substr($name !== '' ? $name : 'image', 0, 255);
     }
 
-    public function listForTicket(int $ticketId): array|bool
+    public function listForTicket(int $ticketId, bool $includeInline = false): array|bool
     {
+        $inlineSql = $includeInline ? '' : ' and ticket_attachments.is_inline = 0';
+
         return $this->query(
             'select ticket_attachments.*, users.name, users.username
              from ticket_attachments
              join users on users.id = ticket_attachments.user_id
-             where ticket_attachments.ticket_id = :ticket_id
+             where ticket_attachments.ticket_id = :ticket_id' . $inlineSql . '
              order by ticket_attachments.created_at asc, ticket_attachments.id asc',
             ['ticket_id' => $ticketId]
         );
