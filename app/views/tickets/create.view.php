@@ -25,14 +25,18 @@
         <label for="body">Details</label>
         <textarea name="body" id="body" rows="8" maxlength="20000" required><?= esc(old_value('body')); ?></textarea>
 
-        <button type="submit">Submit ticket</button>
-        <a href="<?= ROOT ?>/tickets"
-            hx-get="<?= ROOT ?>/tickets"
-            hx-target="#page-content"
-            hx-select="#page-content > *"
-            hx-select-oob="#site-nav"
-            hx-swap="innerHTML"
-            hx-push-url="true">Cancel</a>
+        <div class="form-actions">
+            <button type="submit">Submit ticket</button>
+            <a href="<?= ROOT ?>/tickets"
+                role="button"
+                class="outline secondary"
+                hx-get="<?= ROOT ?>/tickets"
+                hx-target="#page-content"
+                hx-select="#page-content > *"
+                hx-select-oob="#site-nav"
+                hx-swap="innerHTML"
+                hx-push-url="true">Cancel</a>
+        </div>
     </form>
 </article>
 

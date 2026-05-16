@@ -22,24 +22,36 @@
         <p><mark><?= esc(implode(' | ', $errors)); ?></mark></p>
     <?php endif; ?>
 
-    <dl>
-        <dt>Status</dt>
-        <dd><?= esc(str_replace('_', ' ', $ticket->status)) ?></dd>
+    <dl class="ticket-meta-grid">
+        <div class="ticket-meta-card">
+            <dt>Status</dt>
+            <dd><?= esc(str_replace('_', ' ', $ticket->status)) ?></dd>
+        </div>
 
-        <dt>Priority</dt>
-        <dd><?= esc($ticket->priority) ?></dd>
+        <div class="ticket-meta-card">
+            <dt>Priority</dt>
+            <dd><?= esc($ticket->priority) ?></dd>
+        </div>
 
-        <dt>Requester</dt>
-        <dd><?= esc($ticket->requester_name) ?> <small>(<?= esc($ticket->requester_username) ?>)</small></dd>
+        <div class="ticket-meta-card">
+            <dt>Requester</dt>
+            <dd><?= esc($ticket->requester_name) ?> <small>(<?= esc($ticket->requester_username) ?>)</small></dd>
+        </div>
 
-        <dt>Assigned</dt>
-        <dd><?= esc($ticket->assignee_name ?: 'Unassigned') ?></dd>
+        <div class="ticket-meta-card">
+            <dt>Assigned</dt>
+            <dd><?= esc($ticket->assignee_name ?: 'Unassigned') ?></dd>
+        </div>
 
-        <dt>Created</dt>
-        <dd><?= esc($ticket->created_at) ?></dd>
+        <div class="ticket-meta-card">
+            <dt>Created</dt>
+            <dd><?= esc($ticket->created_at) ?></dd>
+        </div>
 
-        <dt>Updated</dt>
-        <dd><?= esc($ticket->updated_at ?: '-') ?></dd>
+        <div class="ticket-meta-card">
+            <dt>Updated</dt>
+            <dd><?= esc($ticket->updated_at ?: '-') ?></dd>
+        </div>
     </dl>
 
     <hr>
@@ -78,7 +90,9 @@
 
             <label for="body">Add reply</label>
             <textarea name="body" id="body" rows="5" maxlength="10000" required><?= esc(old_value('body')) ?></textarea>
-            <button type="submit">Add reply</button>
+            <div class="form-actions">
+                <button type="submit">Add reply</button>
+            </div>
         </form>
     <?php endif; ?>
 
@@ -105,45 +119,53 @@
             <label for="resolution_comment">Resolution comment</label>
             <textarea name="resolution_comment" id="resolution_comment" rows="4" maxlength="10000" placeholder="Required when setting status to resolved"></textarea>
 
-            <button type="submit">Update status</button>
+            <div class="form-actions">
+                <button type="submit">Update status</button>
+            </div>
         </form>
 
-        <form method="post" action="<?= ROOT ?>/tickets/priority/<?= (int)$ticket->id ?>"
-            hx-post="<?= ROOT ?>/tickets/priority/<?= (int)$ticket->id ?>"
-            hx-target="#page-content"
-            hx-select="#page-content > *"
-            hx-select-oob="#site-nav"
-            hx-swap="innerHTML">
-            <?= csrf_field() ?>
+        <div class="staff-control-grid">
+            <form method="post" action="<?= ROOT ?>/tickets/priority/<?= (int)$ticket->id ?>"
+                hx-post="<?= ROOT ?>/tickets/priority/<?= (int)$ticket->id ?>"
+                hx-target="#page-content"
+                hx-select="#page-content > *"
+                hx-select-oob="#site-nav"
+                hx-swap="innerHTML">
+                <?= csrf_field() ?>
 
-            <label for="priority">Priority</label>
-            <select name="priority" id="priority" required>
-                <?php foreach (Model\Ticket::PRIORITIES as $priority): ?>
-                    <option value="<?= esc($priority) ?>" <?= $ticket->priority === $priority ? 'selected' : '' ?>><?= esc($priority) ?></option>
-                <?php endforeach; ?>
-            </select>
+                <label for="priority">Priority</label>
+                <select name="priority" id="priority" required>
+                    <?php foreach (Model\Ticket::PRIORITIES as $priority): ?>
+                        <option value="<?= esc($priority) ?>" <?= $ticket->priority === $priority ? 'selected' : '' ?>><?= esc($priority) ?></option>
+                    <?php endforeach; ?>
+                </select>
 
-            <button type="submit">Update priority</button>
-        </form>
+                <div class="form-actions">
+                    <button type="submit">Update priority</button>
+                </div>
+            </form>
 
-        <form method="post" action="<?= ROOT ?>/tickets/assign/<?= (int)$ticket->id ?>"
-            hx-post="<?= ROOT ?>/tickets/assign/<?= (int)$ticket->id ?>"
-            hx-target="#page-content"
-            hx-select="#page-content > *"
-            hx-select-oob="#site-nav"
-            hx-swap="innerHTML">
-            <?= csrf_field() ?>
+            <form method="post" action="<?= ROOT ?>/tickets/assign/<?= (int)$ticket->id ?>"
+                hx-post="<?= ROOT ?>/tickets/assign/<?= (int)$ticket->id ?>"
+                hx-target="#page-content"
+                hx-select="#page-content > *"
+                hx-select-oob="#site-nav"
+                hx-swap="innerHTML">
+                <?= csrf_field() ?>
 
-            <label for="assigned_to">Assigned staff</label>
-            <select name="assigned_to" id="assigned_to">
-                <option value="0">Unassigned</option>
-                <?php foreach ($staffUsers as $staff): ?>
-                    <option value="<?= (int)$staff->id ?>" <?= (int)($ticket->assigned_to ?? 0) === (int)$staff->id ? 'selected' : '' ?>><?= esc($staff->name) ?> (<?= esc($staff->username) ?>)</option>
-                <?php endforeach; ?>
-            </select>
+                <label for="assigned_to">Assigned staff</label>
+                <select name="assigned_to" id="assigned_to">
+                    <option value="0">Unassigned</option>
+                    <?php foreach ($staffUsers as $staff): ?>
+                        <option value="<?= (int)$staff->id ?>" <?= (int)($ticket->assigned_to ?? 0) === (int)$staff->id ? 'selected' : '' ?>><?= esc($staff->name) ?> (<?= esc($staff->username) ?>)</option>
+                    <?php endforeach; ?>
+                </select>
 
-            <button type="submit">Update assignment</button>
-        </form>
+                <div class="form-actions">
+                    <button type="submit">Update assignment</button>
+                </div>
+            </form>
+        </div>
     <?php endif; ?>
 </article>
 
