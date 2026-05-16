@@ -316,26 +316,26 @@ TCK-YYYY-000001
 
 Purpose: staff/admin can operate the queue.
 
-- [ ] Staff/admin ticket list shows all tickets.
-- [ ] Normal user ticket list shows only own tickets.
-- [ ] Add filter by status.
-- [ ] Add filter by priority.
-- [ ] Add filter by assigned staff.
-- [ ] Add filter by requester username.
-- [ ] Add staff/admin controls on ticket detail page.
-- [ ] Add assignment control.
-- [ ] Add priority control.
-- [ ] Add status control.
-- [ ] Allow status changes to `open`, `in_progress`, `waiting_on_user`, and `resolved`.
-- [ ] Block manual status changes to `closed`.
-- [ ] Require a public comment when changing status to `resolved`.
-- [ ] Store resolution comment in `ticket_comments`.
-- [ ] Set `resolved_at = NOW()` when status becomes `resolved`.
-- [ ] Clear `resolved_at` if ticket reopens.
-- [ ] Add ticket event when status changes.
-- [ ] Add ticket event when priority changes.
-- [ ] Add ticket event when assignment changes.
-- [ ] Update ticket `updated_at` when operational fields change.
+- [x] Staff/admin ticket list shows all tickets.
+- [x] Normal user ticket list shows only own tickets.
+- [x] Add filter by status.
+- [x] Add filter by priority.
+- [x] Add filter by assigned staff.
+- [x] Add filter by requester username.
+- [x] Add staff/admin controls on ticket detail page.
+- [x] Add assignment control.
+- [x] Add priority control.
+- [x] Add status control.
+- [x] Allow status changes to `open`, `in_progress`, `waiting_on_user`, and `resolved`.
+- [x] Block manual status changes to `closed`.
+- [x] Require a public comment when changing status to `resolved`.
+- [x] Store resolution comment in `ticket_comments`.
+- [x] Set `resolved_at = NOW()` when status becomes `resolved`.
+- [x] Clear `resolved_at` if ticket reopens.
+- [x] Add ticket event when status changes.
+- [x] Add ticket event when priority changes.
+- [x] Add ticket event when assignment changes.
+- [x] Update ticket `updated_at` when operational fields change.
 
 ## Phase 8 - Ticket Replies
 

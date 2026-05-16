@@ -80,6 +80,32 @@ final class TicketTest extends TestCase
         $this->assertArrayHasKey('priority', $ticket->errors);
     }
 
+    public function testResolutionCommentIsRequiredOnlyWhenResolving(): void
+    {
+        $ticket = new Ticket;
+
+        $this->assertFalse($ticket->validateResolutionComment('resolved', ''));
+        $this->assertArrayHasKey('resolution_comment', $ticket->errors);
+
+        $this->assertTrue($ticket->validateResolutionComment('resolved', 'Issue fixed by reinstalling the driver.'));
+        $this->assertTrue($ticket->validateResolutionComment('in_progress', ''));
+    }
+
+    public function testStatusUpdateDataSetsAndClearsResolvedAt(): void
+    {
+        $ticket = new Ticket;
+
+        $resolvedData = $ticket->statusUpdateData('in_progress', 'resolved');
+        $this->assertSame('resolved', $resolvedData['status']);
+        $this->assertArrayHasKey('resolved_at', $resolvedData);
+        $this->assertNotNull($resolvedData['resolved_at']);
+
+        $reopenedData = $ticket->statusUpdateData('resolved', 'open');
+        $this->assertSame('open', $reopenedData['status']);
+        $this->assertArrayHasKey('resolved_at', $reopenedData);
+        $this->assertNull($reopenedData['resolved_at']);
+    }
+
     public function testTicketNumberUsesHumanFriendlyFormat(): void
     {
         $ticket = new Ticket;

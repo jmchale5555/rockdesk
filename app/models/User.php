@@ -188,6 +188,30 @@ class User
         );
     }
 
+    public function listAssignableStaff(): array|bool
+    {
+        return $this->query(
+            "select id, name, username
+             from users
+             where role in ('staff', 'admin')
+               and is_active = 1
+             order by name asc, username asc"
+        );
+    }
+
+    public function isAssignableStaff(int $id): bool
+    {
+        return (bool)$this->get_row(
+            "select id
+             from users
+             where id = :id
+               and role in ('staff', 'admin')
+               and is_active = 1
+             limit 1",
+            ['id' => $id]
+        );
+    }
+
     public function usernameExists(string $username, int $ignoreUserId = 0): bool
     {
         $data = ['username' => $this->normalizeUsername($username)];

@@ -71,15 +71,54 @@ class Ticket
         );
     }
 
-    public function listForStaff(): array|bool
+    public function listForStaff(array $filters = []): array|bool
     {
+        $where = [];
+        $data = [];
+
+        if (!empty($filters['status']) && $this->isValidStatus((string)$filters['status']))
+        {
+            $where[] = 'tickets.status = :status';
+            $data['status'] = $filters['status'];
+        }
+
+        if (!empty($filters['priority']) && $this->isValidPriority((string)$filters['priority']))
+        {
+            $where[] = 'tickets.priority = :priority';
+            $data['priority'] = $filters['priority'];
+        }
+
+        if (isset($filters['assigned_to']) && $filters['assigned_to'] !== '')
+        {
+            if ((string)$filters['assigned_to'] === 'unassigned')
+            {
+                $where[] = 'tickets.assigned_to is null';
+            }
+            else
+            if ((int)$filters['assigned_to'] > 0)
+            {
+                $where[] = 'tickets.assigned_to = :assigned_to';
+                $data['assigned_to'] = (int)$filters['assigned_to'];
+            }
+        }
+
+        if (!empty($filters['requester']))
+        {
+            $where[] = 'users.username like :requester';
+            $data['requester'] = '%' . trim((string)$filters['requester']) . '%';
+        }
+
+        $whereSql = empty($where) ? '' : ' where ' . implode(' and ', $where);
+
         return $this->query(
             'select tickets.*, users.username as requester_username, users.name as requester_name,
                     assignee.username as assignee_username, assignee.name as assignee_name
              from tickets
              join users on users.id = tickets.user_id
              left join users assignee on assignee.id = tickets.assigned_to
-             order by tickets.updated_at desc, tickets.created_at desc'
+             ' . $whereSql . '
+             order by tickets.updated_at desc, tickets.created_at desc',
+            $data
         );
     }
 
@@ -158,6 +197,39 @@ class Ticket
         }
 
         return empty($this->errors);
+    }
+
+    public function validateResolutionComment(string $status, string $comment): bool
+    {
+        $this->errors = [];
+
+        if ($status === 'resolved' && trim($comment) === '')
+        {
+            $this->errors['resolution_comment'] = 'Resolution comment is required when resolving a ticket';
+        }
+
+        return empty($this->errors);
+    }
+
+    public function statusUpdateData(string $oldStatus, string $newStatus): array
+    {
+        $now = date('Y-m-d H:i:s');
+        $data = [
+            'status' => $newStatus,
+            'updated_at' => $now,
+        ];
+
+        if ($newStatus === 'resolved')
+        {
+            $data['resolved_at'] = $now;
+        }
+        else
+        if ($oldStatus === 'resolved')
+        {
+            $data['resolved_at'] = null;
+        }
+
+        return $data;
     }
 
     public function generateTicketNumber(int $nextId, ?int $year = null): string
