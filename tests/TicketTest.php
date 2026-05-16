@@ -32,6 +32,22 @@ final class TicketTest extends TestCase
         ]));
     }
 
+    public function testTicketCreateDataUsesMvpDefaults(): void
+    {
+        $ticket = new Ticket;
+        $data = $ticket->makeCreateData(12, '  Laptop issue  ', '  It stopped booting.  ', 'TCK-2026-000001');
+
+        $this->assertSame('TCK-2026-000001', $data['ticket_number']);
+        $this->assertSame(12, $data['user_id']);
+        $this->assertNull($data['assigned_to']);
+        $this->assertSame('Laptop issue', $data['subject']);
+        $this->assertSame('It stopped booting.', $data['body']);
+        $this->assertSame('new', $data['status']);
+        $this->assertSame('normal', $data['priority']);
+        $this->assertArrayHasKey('created_at', $data);
+        $this->assertArrayHasKey('updated_at', $data);
+    }
+
     public function testTicketSubjectIsLimitedToOneHundredNinetyCharacters(): void
     {
         $ticket = new Ticket;
@@ -48,8 +64,10 @@ final class TicketTest extends TestCase
     {
         $ticket = new Ticket;
 
+        $this->assertTrue($ticket->isValidStatus('new'));
         $this->assertTrue($ticket->isValidStatus('closed'));
         $this->assertFalse($ticket->isStaffSettableStatus('closed'));
+        $this->assertFalse($ticket->isStaffSettableStatus('new'));
         $this->assertTrue($ticket->isStaffSettableStatus('resolved'));
     }
 

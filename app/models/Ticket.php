@@ -6,7 +6,7 @@ class Ticket
 {
     use Model;
 
-    public const STATUSES = ['open', 'in_progress', 'waiting_on_user', 'resolved', 'closed'];
+    public const STATUSES = ['new', 'open', 'in_progress', 'waiting_on_user', 'resolved', 'closed'];
     public const STAFF_SET_STATUSES = ['open', 'in_progress', 'waiting_on_user', 'resolved'];
     public const PRIORITIES = ['low', 'normal', 'high', 'urgent'];
 
@@ -38,6 +38,63 @@ class Ticket
         $this->validateSubjectAndBody($data);
 
         return empty($this->errors);
+    }
+
+    public function makeCreateData(int $userId, string $subject, string $body, string $ticketNumber): array
+    {
+        $now = date('Y-m-d H:i:s');
+
+        return [
+            'ticket_number' => $ticketNumber,
+            'user_id' => $userId,
+            'assigned_to' => null,
+            'subject' => trim($subject),
+            'body' => trim($body),
+            'status' => 'new',
+            'priority' => 'normal',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ];
+    }
+
+    public function listForUser(int $userId): array|bool
+    {
+        return $this->query(
+            'select tickets.*, users.username as requester_username, users.name as requester_name,
+                    assignee.username as assignee_username, assignee.name as assignee_name
+             from tickets
+             join users on users.id = tickets.user_id
+             left join users assignee on assignee.id = tickets.assigned_to
+             where tickets.user_id = :user_id
+             order by tickets.updated_at desc, tickets.created_at desc',
+            ['user_id' => $userId]
+        );
+    }
+
+    public function listForStaff(): array|bool
+    {
+        return $this->query(
+            'select tickets.*, users.username as requester_username, users.name as requester_name,
+                    assignee.username as assignee_username, assignee.name as assignee_name
+             from tickets
+             join users on users.id = tickets.user_id
+             left join users assignee on assignee.id = tickets.assigned_to
+             order by tickets.updated_at desc, tickets.created_at desc'
+        );
+    }
+
+    public function findWithRequester(int $id): mixed
+    {
+        return $this->get_row(
+            'select tickets.*, users.username as requester_username, users.name as requester_name,
+                    assignee.username as assignee_username, assignee.name as assignee_name
+             from tickets
+             join users on users.id = tickets.user_id
+             left join users assignee on assignee.id = tickets.assigned_to
+             where tickets.id = :id
+             limit 1',
+            ['id' => $id]
+        );
     }
 
     public function validateSubjectAndBody(array $data): bool

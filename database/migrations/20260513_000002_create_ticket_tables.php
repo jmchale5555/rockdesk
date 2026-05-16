@@ -11,7 +11,7 @@ return [
                 assigned_to BIGINT UNSIGNED NULL,
                 subject VARCHAR(190) NOT NULL,
                 body TEXT NOT NULL,
-                status ENUM('open', 'in_progress', 'waiting_on_user', 'resolved', 'closed') NOT NULL DEFAULT 'open',
+                status ENUM('new', 'open', 'in_progress', 'waiting_on_user', 'resolved', 'closed') NOT NULL DEFAULT 'new',
                 priority ENUM('low', 'normal', 'high', 'urgent') NOT NULL DEFAULT 'normal',
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME NULL DEFAULT NULL,

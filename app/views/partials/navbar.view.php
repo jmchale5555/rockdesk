@@ -65,6 +65,25 @@
                         hx-push-url="true"
                         <?= $url === 'login' ? 'aria-current="page"' : '' ?>>Login</a>
                 <?php else: ?>
+                    <a href="<?= ROOT ?>/tickets"
+                        x-on:click="closeMenu()"
+                        hx-get="<?= ROOT ?>/tickets"
+                        hx-target="#page-content"
+                        hx-select="#page-content > *"
+                        hx-select-oob="#site-nav"
+                        hx-swap="innerHTML"
+                        hx-push-url="true"
+                        <?= $url === 'tickets' ? 'aria-current="page"' : '' ?>>Tickets</a>
+
+                    <a href="<?= ROOT ?>/tickets/create"
+                        x-on:click="closeMenu()"
+                        hx-get="<?= ROOT ?>/tickets/create"
+                        hx-target="#page-content"
+                        hx-select="#page-content > *"
+                        hx-select-oob="#site-nav"
+                        hx-swap="innerHTML"
+                        hx-push-url="true">New ticket</a>
+
                     <?php if (is_admin()): ?>
                         <a href="<?= ROOT ?>/users"
                             x-on:click="closeMenu()"

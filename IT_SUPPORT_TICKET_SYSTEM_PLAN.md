@@ -210,7 +210,7 @@ user_id BIGINT UNSIGNED NOT NULL
 assigned_to BIGINT UNSIGNED NULL
 subject VARCHAR(190) NOT NULL
 body TEXT NOT NULL
-status ENUM('open', 'in_progress', 'waiting_on_user', 'resolved', 'closed') NOT NULL DEFAULT 'open'
+status ENUM('new', 'open', 'in_progress', 'waiting_on_user', 'resolved', 'closed') NOT NULL DEFAULT 'new'
 priority ENUM('low', 'normal', 'high', 'urgent') NOT NULL DEFAULT 'normal'
 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 updated_at DATETIME NULL
@@ -264,6 +264,7 @@ INDEX idx_ticket_events_created_at (created_at)
 
 Recommended ticket statuses:
 
+- `new`
 - `open`
 - `in_progress`
 - `waiting_on_user`
@@ -281,29 +282,29 @@ Recommended ticket priorities:
 
 Purpose: users can create and track their own tickets.
 
-- [ ] Add `Tickets` controller.
-- [ ] Add `/tickets` list route.
-- [ ] Add `/tickets/create` form route.
-- [ ] Add `/tickets/store` submit route.
-- [ ] Add `/tickets/show/{id}` detail route.
-- [ ] Add ticket create view.
-- [ ] Add ticket list view.
-- [ ] Add ticket detail view.
-- [ ] Add subject text input.
-- [ ] Add plain body textarea.
-- [ ] Validate subject is required.
-- [ ] Validate subject max length.
-- [ ] Validate body is required.
-- [ ] Add success/failure flash messages.
-- [ ] New ticket starts as `open`.
-- [ ] New ticket priority is `normal`.
-- [ ] New ticket assignment is `NULL`.
-- [ ] New ticket gets a human-friendly ticket number.
-- [ ] New ticket creates `ticket_events` row with `event_type = 'created'`.
-- [ ] User ticket list shows only the current user's tickets.
-- [ ] Staff/admin ticket list shows all tickets.
-- [ ] Ticket body is rendered as escaped plain text.
-- [ ] Preserve line breaks safely, for example escaped text plus `nl2br()`.
+- [x] Add `Tickets` controller.
+- [x] Add `/tickets` list route.
+- [x] Add `/tickets/create` form route.
+- [x] Add `/tickets/store` submit route.
+- [x] Add `/tickets/show/{id}` detail route.
+- [x] Add ticket create view.
+- [x] Add ticket list view.
+- [x] Add ticket detail view.
+- [x] Add subject text input.
+- [x] Add plain body textarea.
+- [x] Validate subject is required.
+- [x] Validate subject max length.
+- [x] Validate body is required.
+- [x] Add success/failure flash messages.
+- [x] New ticket starts as `new`.
+- [x] New ticket priority is `normal`.
+- [x] New ticket assignment is `NULL`.
+- [x] New ticket gets a human-friendly ticket number.
+- [x] New ticket creates `ticket_events` row with `event_type = 'created'`.
+- [x] User ticket list shows only the current user's tickets.
+- [x] Staff/admin ticket list shows all tickets.
+- [x] Ticket body is rendered as escaped plain text.
+- [x] Preserve line breaks safely, for example escaped text plus `nl2br()`.
 
 Recommended ticket-number format:
 
