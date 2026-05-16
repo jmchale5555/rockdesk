@@ -1,4 +1,4 @@
-# PHP MVC + HTMX + AlpineJS (no build system)
+# IT Helpdesk System - PHP MVC + HTMX + AlpineJS (no build system)
 
 ## Introduction
 
