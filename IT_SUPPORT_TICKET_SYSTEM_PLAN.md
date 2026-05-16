@@ -341,19 +341,19 @@ Purpose: staff/admin can operate the queue.
 
 Purpose: turn tickets into support conversations.
 
-- [ ] Add `/tickets/reply/{id}` route.
-- [ ] Add reply form on ticket detail.
-- [ ] Users can reply to own non-closed tickets.
-- [ ] Staff/admin can reply to any non-closed ticket.
-- [ ] Closed tickets are read-only.
-- [ ] Reply creates `ticket_comments` row.
-- [ ] Reply creates `ticket_events` row with `event_type = 'commented'`.
-- [ ] Reply updates ticket `updated_at`.
-- [ ] If normal user replies to `resolved`, set status to `open`.
-- [ ] If normal user replies to `waiting_on_user`, set status to `open`.
-- [ ] Reopen action creates `ticket_events` row with `event_type = 'reopened_by_user_reply'`.
-- [ ] Staff/admin reply does not automatically reopen resolved tickets unless explicitly changing status.
-- [ ] Ticket detail shows original request plus chronological public comments.
+- [x] Add `/tickets/reply/{id}` route.
+- [x] Add reply form on ticket detail.
+- [x] Users can reply to own non-closed tickets.
+- [x] Staff/admin can reply to any non-closed ticket.
+- [x] Closed tickets are read-only.
+- [x] Reply creates `ticket_comments` row.
+- [x] Reply creates `ticket_events` row with `event_type = 'commented'`.
+- [x] Reply updates ticket `updated_at`.
+- [x] If normal user replies to `resolved`, set status to `open`.
+- [x] If normal user replies to `waiting_on_user`, set status to `open`.
+- [x] Reopen action creates `ticket_events` row with `event_type = 'reopened_by_user_reply'`.
+- [x] Staff/admin reply does not automatically reopen resolved tickets unless explicitly changing status.
+- [x] Ticket detail shows original request plus chronological public comments.
 
 ## Phase 9 - Auto-Close Resolved Tickets
 

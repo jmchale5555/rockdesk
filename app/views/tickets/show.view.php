@@ -47,6 +47,34 @@
     <h2>Request</h2>
     <p><?= nl2br(esc($ticket->body)) ?></p>
 
+    <hr>
+
+    <h2>Conversation</h2>
+
+    <?php if (empty($comments)): ?>
+        <p>No replies yet.</p>
+    <?php else: ?>
+        <?php foreach ($comments as $comment): ?>
+            <article>
+                <header>
+                    <strong><?= esc($comment->name) ?></strong>
+                    <small><?= esc($comment->username) ?> · <?= esc($comment->role) ?> · <?= esc($comment->created_at) ?></small>
+                </header>
+                <p><?= nl2br(esc($comment->body)) ?></p>
+            </article>
+        <?php endforeach; ?>
+    <?php endif; ?>
+
+    <?php if ($ticket->status === 'closed'): ?>
+        <p><mark>This ticket is closed and read-only.</mark></p>
+    <?php else: ?>
+        <form method="post" action="<?= ROOT ?>/tickets/reply/<?= (int)$ticket->id ?>">
+            <label for="body">Add reply</label>
+            <textarea name="body" id="body" rows="5" required><?= esc(old_value('body')) ?></textarea>
+            <button type="submit">Add reply</button>
+        </form>
+    <?php endif; ?>
+
     <?php if (is_staff_or_admin()): ?>
         <hr>
 

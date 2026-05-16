@@ -106,11 +106,70 @@ class Tickets
 
         require_ticket_access($row);
         $user = new User;
+        $comment = new TicketComment;
 
         $this->view('tickets/show', [
             'ticket' => $row,
             'staffUsers' => $user->listAssignableStaff() ?: [],
+            'comments' => $comment->listPublicForTicket((int)$row->id) ?: [],
         ]);
+    }
+
+    public function reply($id = '')
+    {
+        require_login();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST')
+        {
+            redirect('tickets/show/' . (int)$id);
+        }
+
+        $ticket = new Ticket;
+        $row = $ticket->findWithRequester((int)$id);
+
+        if (!$row)
+        {
+            http_response_code(404);
+            $this->view('404');
+            return;
+        }
+
+        require_ticket_access($row);
+
+        if (!$ticket->canReply($row))
+        {
+            $this->renderShowWithErrors($row, ['reply' => 'Closed tickets are read-only']);
+            return;
+        }
+
+        $comment = new TicketComment;
+        $data = [
+            'ticket_id' => (int)$row->id,
+            'user_id' => (int)current_user_id(),
+            'body' => (string)($_POST['body'] ?? ''),
+            'is_internal' => 0,
+            'created_at' => date('Y-m-d H:i:s'),
+        ];
+
+        if (!$comment->validateCreate($data))
+        {
+            $this->renderShowWithErrors($row, $comment->errors);
+            return;
+        }
+
+        $comment->insert($data);
+        $update = $ticket->replyUpdateData($row, current_user());
+        $ticket->update((int)$row->id, $update);
+
+        $this->recordEvent((int)$row->id, 'commented', null, null, trim($data['body']));
+
+        if (($update['status'] ?? '') === 'open')
+        {
+            $this->recordEvent((int)$row->id, 'reopened_by_user_reply', (string)$row->status, 'open');
+        }
+
+        message('Reply added successfully.');
+        redirect('tickets/show/' . (int)$row->id);
     }
 
     public function status($id = '')
@@ -262,9 +321,11 @@ class Tickets
     private function renderShowWithErrors(mixed $ticketRow, array $errors): void
     {
         $user = new User;
+        $comment = new TicketComment;
         $this->view('tickets/show', [
             'ticket' => $ticketRow,
             'staffUsers' => $user->listAssignableStaff() ?: [],
+            'comments' => $comment->listPublicForTicket((int)$ticketRow->id) ?: [],
             'errors' => $errors,
         ]);
     }

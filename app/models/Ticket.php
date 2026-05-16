@@ -232,6 +232,39 @@ class Ticket
         return $data;
     }
 
+    public function canReply(mixed $ticket): bool
+    {
+        return !empty($ticket) && ($ticket->status ?? '') !== 'closed';
+    }
+
+    public function shouldReopenOnUserReply(mixed $ticket, mixed $user): bool
+    {
+        if (empty($ticket) || empty($user) || is_staff_or_admin($user))
+        {
+            return false;
+        }
+
+        return in_array((string)$ticket->status, ['resolved', 'waiting_on_user'], true);
+    }
+
+    public function replyUpdateData(mixed $ticket, mixed $user): array
+    {
+        $now = date('Y-m-d H:i:s');
+        $data = ['updated_at' => $now];
+
+        if ($this->shouldReopenOnUserReply($ticket, $user))
+        {
+            $data['status'] = 'open';
+
+            if (($ticket->status ?? '') === 'resolved')
+            {
+                $data['resolved_at'] = null;
+            }
+        }
+
+        return $data;
+    }
+
     public function generateTicketNumber(int $nextId, ?int $year = null): string
     {
         $year = $year ?: (int)date('Y');

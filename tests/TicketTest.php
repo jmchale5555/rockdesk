@@ -106,6 +106,47 @@ final class TicketTest extends TestCase
         $this->assertNull($reopenedData['resolved_at']);
     }
 
+    public function testClosedTicketsCannotReceiveReplies(): void
+    {
+        $ticket = new Ticket;
+
+        $this->assertFalse($ticket->canReply((object)['status' => 'closed']));
+        $this->assertTrue($ticket->canReply((object)['status' => 'resolved']));
+        $this->assertTrue($ticket->canReply((object)['status' => 'open']));
+    }
+
+    public function testUserReplyReopensResolvedAndWaitingTickets(): void
+    {
+        $ticket = new Ticket;
+        $user = (object)['role' => 'user'];
+
+        $this->assertTrue($ticket->shouldReopenOnUserReply((object)['status' => 'resolved'], $user));
+        $this->assertTrue($ticket->shouldReopenOnUserReply((object)['status' => 'waiting_on_user'], $user));
+        $this->assertFalse($ticket->shouldReopenOnUserReply((object)['status' => 'open'], $user));
+    }
+
+    public function testStaffReplyDoesNotAutomaticallyReopenResolvedTicket(): void
+    {
+        $ticket = new Ticket;
+        $staff = (object)['role' => 'staff'];
+
+        $this->assertFalse($ticket->shouldReopenOnUserReply((object)['status' => 'resolved'], $staff));
+    }
+
+    public function testReplyUpdateDataReopensUserReplyAndClearsResolvedAt(): void
+    {
+        $ticket = new Ticket;
+        $data = $ticket->replyUpdateData((object)['status' => 'resolved'], (object)['role' => 'user']);
+
+        $this->assertSame('open', $data['status']);
+        $this->assertArrayHasKey('resolved_at', $data);
+        $this->assertNull($data['resolved_at']);
+
+        $staffData = $ticket->replyUpdateData((object)['status' => 'resolved'], (object)['role' => 'staff']);
+        $this->assertArrayNotHasKey('status', $staffData);
+        $this->assertArrayNotHasKey('resolved_at', $staffData);
+    }
+
     public function testTicketNumberUsesHumanFriendlyFormat(): void
     {
         $ticket = new Ticket;
