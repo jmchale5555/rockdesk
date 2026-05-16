@@ -66,14 +66,18 @@
                 </label>
             </div>
 
-            <button type="submit">Filter</button>
-            <a href="<?= ROOT ?>/tickets"
-                hx-get="<?= ROOT ?>/tickets"
-                hx-target="#page-content"
-                hx-select="#page-content > *"
-                hx-select-oob="#site-nav"
-                hx-swap="innerHTML"
-                hx-push-url="true">Clear</a>
+            <div class="form-actions filter-actions">
+                <button type="submit">Filter</button>
+                <a href="<?= ROOT ?>/tickets"
+                    role="button"
+                    class="outline secondary"
+                    hx-get="<?= ROOT ?>/tickets"
+                    hx-target="#page-content"
+                    hx-select="#page-content > *"
+                    hx-select-oob="#site-nav"
+                    hx-swap="innerHTML"
+                    hx-push-url="true">Clear</a>
+            </div>
         </form>
     <?php endif; ?>
 
