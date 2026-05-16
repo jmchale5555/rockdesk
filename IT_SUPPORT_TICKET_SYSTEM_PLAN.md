@@ -463,14 +463,14 @@ LDAP_TLS_REQUIRE_CERT=true
 
 ### Attachments
 
-- [ ] Add `ticket_attachments` table.
-- [ ] Add upload directory strategy.
-- [ ] Store files outside executable paths if practical.
-- [ ] Validate file size.
-- [ ] Validate MIME type.
-- [ ] Generate safe stored filenames.
-- [ ] Restrict downloads by ticket permissions.
-- [ ] Add image preview for safe image types.
+- [x] Add `ticket_attachments` table.
+- [x] Add upload directory strategy.
+- [x] Store files outside executable paths if practical.
+- [x] Validate file size.
+- [x] Validate MIME type.
+- [x] Generate safe stored filenames.
+- [x] Restrict downloads by ticket permissions.
+- [x] Add image preview for safe image types.
 - [ ] Consider antivirus scanning for production use.
 
 ### WYSIWYG And Inline Images

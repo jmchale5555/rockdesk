@@ -67,7 +67,7 @@
         <p>No replies yet.</p>
     <?php else: ?>
         <?php foreach ($comments as $comment): ?>
-            <article class="<?= (int)($comment->is_internal ?? 0) === 1 ? 'internal-note' : '' ?>">
+            <article class="conversation-card <?= (int)($comment->is_internal ?? 0) === 1 ? 'internal-note' : '' ?>">
                 <header>
                     <strong><?= esc($comment->name) ?></strong>
                     <?php if ((int)($comment->is_internal ?? 0) === 1): ?>
@@ -80,9 +80,41 @@
         <?php endforeach; ?>
     <?php endif; ?>
 
+    <?php if (!empty($attachments)): ?>
+        <h2>Attachments</h2>
+        <div class="attachment-grid">
+            <?php foreach ($attachments as $attachment): ?>
+                <figure class="attachment-card">
+                    <a href="<?= ROOT ?>/tickets/attachment/<?= (int)$attachment->id ?>" target="_blank" rel="noopener">
+                        <img src="<?= ROOT ?>/tickets/attachment/<?= (int)$attachment->id ?>" alt="<?= esc($attachment->original_name) ?>">
+                    </a>
+                    <figcaption>
+                        <strong><?= esc($attachment->original_name) ?></strong>
+                        <small><?= esc($attachment->username) ?> · <?= esc(number_format((int)$attachment->file_size / 1024, 1)) ?> KB · <?= esc($attachment->created_at) ?></small>
+                    </figcaption>
+                </figure>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+
     <?php if ($ticket->status === 'closed'): ?>
         <p><mark>This ticket is closed and read-only.</mark></p>
     <?php else: ?>
+        <form method="post" action="<?= ROOT ?>/tickets/upload/<?= (int)$ticket->id ?>" enctype="multipart/form-data">
+            <?= csrf_field() ?>
+
+            <label for="attachment">Attach image</label>
+            <input type="hidden" name="MAX_FILE_SIZE" value="5242880">
+            <input type="file" name="attachment" id="attachment" accept="image/jpeg,image/png,image/webp" required>
+            <small>JPG, PNG, or WebP. Maximum 5 MB.</small>
+
+            <div class="form-actions">
+                <button type="submit">Upload image</button>
+            </div>
+        </form>
+
+        <hr class="section-divider">
+
         <form method="post" action="<?= ROOT ?>/tickets/reply/<?= (int)$ticket->id ?>"
             hx-post="<?= ROOT ?>/tickets/reply/<?= (int)$ticket->id ?>"
             hx-target="#page-content"

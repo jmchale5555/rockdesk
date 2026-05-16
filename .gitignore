@@ -8,3 +8,5 @@ vendor/
 .env.*
 !.env.example
 .phpunit.result.cache
+storage/ticket-attachments/*
+!storage/ticket-attachments/.gitkeep

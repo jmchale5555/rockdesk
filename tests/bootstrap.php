@@ -9,4 +9,5 @@ require_once __DIR__ . '/../app/core/Model.php';
 require_once __DIR__ . '/../app/models/User.php';
 require_once __DIR__ . '/../app/models/Ticket.php';
 require_once __DIR__ . '/../app/models/TicketComment.php';
+require_once __DIR__ . '/../app/models/TicketAttachment.php';
 require_once __DIR__ . '/../app/models/TicketEvent.php';

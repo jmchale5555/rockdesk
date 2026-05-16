@@ -1,6 +1,7 @@
 <?php
 
 use Model\Ticket;
+use Model\TicketAttachment;
 use Model\TicketComment;
 use Model\TicketEvent;
 use PHPUnit\Framework\TestCase;
@@ -231,6 +232,65 @@ final class TicketTest extends TestCase
         $this->assertArrayHasKey('body', $comment->errors);
     }
 
+    public function testTicketAttachmentValidationAcceptsPngImage(): void
+    {
+        $attachment = new TicketAttachment;
+        $path = tempnam(sys_get_temp_dir(), 'ticket-attachment-');
+        file_put_contents($path, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII='));
+
+        $this->assertTrue($attachment->validateUpload([
+            'name' => 'screenshot.png',
+            'tmp_name' => $path,
+            'size' => filesize($path),
+            'error' => UPLOAD_ERR_OK,
+        ]));
+        $this->assertSame('png', $attachment->extensionForMimeType('image/png'));
+
+        unlink($path);
+    }
+
+    public function testTicketAttachmentValidationRejectsNonImageFile(): void
+    {
+        $attachment = new TicketAttachment;
+        $path = tempnam(sys_get_temp_dir(), 'ticket-attachment-');
+        file_put_contents($path, 'plain text');
+
+        $this->assertFalse($attachment->validateUpload([
+            'name' => 'notes.txt',
+            'tmp_name' => $path,
+            'size' => filesize($path),
+            'error' => UPLOAD_ERR_OK,
+        ]));
+        $this->assertArrayHasKey('attachment', $attachment->errors);
+
+        unlink($path);
+    }
+
+    public function testTicketAttachmentValidationRejectsOversizedImage(): void
+    {
+        $attachment = new TicketAttachment;
+        $path = tempnam(sys_get_temp_dir(), 'ticket-attachment-');
+        file_put_contents($path, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII='));
+
+        $this->assertFalse($attachment->validateUpload([
+            'name' => 'large.png',
+            'tmp_name' => $path,
+            'size' => TicketAttachment::MAX_BYTES + 1,
+            'error' => UPLOAD_ERR_OK,
+        ]));
+        $this->assertArrayHasKey('attachment', $attachment->errors);
+
+        unlink($path);
+    }
+
+    public function testTicketAttachmentOriginalNameIsSanitized(): void
+    {
+        $attachment = new TicketAttachment;
+
+        $this->assertSame('invoice_.png', $attachment->safeOriginalName('../invoice?.png'));
+        $this->assertSame('image', $attachment->safeOriginalName(''));
+    }
+
     public function testTicketEventValidationAcceptsKnownEventTypesOnly(): void
     {
         $event = new TicketEvent;
@@ -248,6 +308,11 @@ final class TicketTest extends TestCase
         $this->assertTrue($event->validateCreate([
             'ticket_id' => 4,
             'event_type' => 'internal_note_added',
+        ]));
+
+        $this->assertTrue($event->validateCreate([
+            'ticket_id' => 4,
+            'event_type' => 'attachment_uploaded',
         ]));
 
         $this->assertFalse($event->validateCreate([
