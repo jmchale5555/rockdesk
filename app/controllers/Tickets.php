@@ -113,7 +113,7 @@ class Tickets
         $this->view('tickets/show', [
             'ticket' => $row,
             'staffUsers' => $user->listAssignableStaff() ?: [],
-            'comments' => $comment->listPublicForTicket((int)$row->id) ?: [],
+            'comments' => $comment->listVisibleForTicket((int)$row->id, is_staff_or_admin()) ?: [],
         ]);
     }
 
@@ -173,6 +173,58 @@ class Tickets
         }
 
         message('Reply added successfully.');
+        redirect('tickets/show/' . (int)$row->id);
+    }
+
+    public function internal($id = '')
+    {
+        require_role(['staff', 'admin']);
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST')
+        {
+            redirect('tickets/show/' . (int)$id);
+        }
+
+        require_csrf();
+
+        $ticket = new Ticket;
+        $row = $ticket->findWithRequester((int)$id);
+
+        if (!$row)
+        {
+            http_response_code(404);
+            $this->view('404');
+            return;
+        }
+
+        if (!$ticket->canReply($row))
+        {
+            $this->renderShowWithErrors($row, ['internal_note' => 'Closed tickets are read-only']);
+            return;
+        }
+
+        $comment = new TicketComment;
+        $data = [
+            'ticket_id' => (int)$row->id,
+            'user_id' => (int)current_user_id(),
+            'body' => (string)($_POST['internal_body'] ?? ''),
+            'is_internal' => 1,
+            'created_at' => date('Y-m-d H:i:s'),
+        ];
+
+        if (!$comment->validateCreate($data))
+        {
+            $this->renderShowWithErrors($row, $comment->errors);
+            return;
+        }
+
+        $comment->insert($data);
+        $ticket->update((int)$row->id, [
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $this->recordEvent((int)$row->id, 'internal_note_added', null, null, trim($data['body']));
+
+        message('Internal note added.');
         redirect('tickets/show/' . (int)$row->id);
     }
 
@@ -335,7 +387,7 @@ class Tickets
         $this->view('tickets/show', [
             'ticket' => $ticketRow,
             'staffUsers' => $user->listAssignableStaff() ?: [],
-            'comments' => $comment->listPublicForTicket((int)$ticketRow->id) ?: [],
+            'comments' => $comment->listVisibleForTicket((int)$ticketRow->id, is_staff_or_admin()) ?: [],
             'errors' => $errors,
         ]);
     }

@@ -207,6 +207,18 @@ final class TicketTest extends TestCase
         ]));
     }
 
+    public function testTicketCommentValidationAcceptsInternalComment(): void
+    {
+        $comment = new TicketComment;
+
+        $this->assertTrue($comment->validateCreate([
+            'ticket_id' => 4,
+            'user_id' => 7,
+            'body' => 'Staff-only context.',
+            'is_internal' => 1,
+        ]));
+    }
+
     public function testTicketCommentBodyHasPracticalLengthLimit(): void
     {
         $comment = new TicketComment;
@@ -231,6 +243,11 @@ final class TicketTest extends TestCase
         $this->assertTrue($event->validateCreate([
             'ticket_id' => 4,
             'event_type' => 'closed_automatically',
+        ]));
+
+        $this->assertTrue($event->validateCreate([
+            'ticket_id' => 4,
+            'event_type' => 'internal_note_added',
         ]));
 
         $this->assertFalse($event->validateCreate([

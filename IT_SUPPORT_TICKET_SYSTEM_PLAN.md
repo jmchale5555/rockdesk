@@ -456,10 +456,10 @@ LDAP_TLS_REQUIRE_CERT=true
 
 ### Internal Staff Notes
 
-- [ ] Expose `is_internal` comments to staff/admin only.
-- [ ] Hide internal comments from normal users.
-- [ ] Add visual distinction in ticket timeline.
-- [ ] Add audit event for internal notes.
+- [x] Expose `is_internal` comments to staff/admin only.
+- [x] Hide internal comments from normal users.
+- [x] Add visual distinction in ticket timeline.
+- [x] Add audit event for internal notes.
 
 ### Attachments
 

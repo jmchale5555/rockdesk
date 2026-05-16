@@ -297,3 +297,22 @@
     margin-bottom: 0.5rem;
     overflow-wrap: anywhere;
 }
+
+.internal-note {
+    border-color: color-mix(in srgb, var(--pico-primary-border) 55%, var(--pico-muted-border-color));
+    background: color-mix(in srgb, var(--pico-primary-focus) 35%, var(--pico-card-background-color, transparent));
+}
+
+.internal-note header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.internal-note mark {
+    padding: 0.125rem 0.375rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}

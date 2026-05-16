@@ -61,4 +61,18 @@ class TicketComment
             ['ticket_id' => $ticketId]
         );
     }
+
+    public function listVisibleForTicket(int $ticketId, bool $includeInternal = false): array|bool
+    {
+        $visibilitySql = $includeInternal ? '' : ' and ticket_comments.is_internal = 0';
+
+        return $this->query(
+            'select ticket_comments.*, users.name, users.username, users.role
+             from ticket_comments
+             join users on users.id = ticket_comments.user_id
+             where ticket_comments.ticket_id = :ticket_id' . $visibilitySql . '
+             order by ticket_comments.created_at asc, ticket_comments.id asc',
+            ['ticket_id' => $ticketId]
+        );
+    }
 }

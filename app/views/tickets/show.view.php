@@ -67,9 +67,12 @@
         <p>No replies yet.</p>
     <?php else: ?>
         <?php foreach ($comments as $comment): ?>
-            <article>
+            <article class="<?= (int)($comment->is_internal ?? 0) === 1 ? 'internal-note' : '' ?>">
                 <header>
                     <strong><?= esc($comment->name) ?></strong>
+                    <?php if ((int)($comment->is_internal ?? 0) === 1): ?>
+                        <mark>Internal note</mark>
+                    <?php endif; ?>
                     <small><?= esc($comment->username) ?> · <?= esc($comment->role) ?> · <?= esc($comment->created_at) ?></small>
                 </header>
                 <p><?= nl2br(esc($comment->body)) ?></p>
@@ -100,6 +103,24 @@
         <hr>
 
         <h2>Staff controls</h2>
+
+        <?php if ($ticket->status !== 'closed'): ?>
+            <form method="post" action="<?= ROOT ?>/tickets/internal/<?= (int)$ticket->id ?>"
+                hx-post="<?= ROOT ?>/tickets/internal/<?= (int)$ticket->id ?>"
+                hx-target="#page-content"
+                hx-select="#page-content > *"
+                hx-select-oob="#site-nav"
+                hx-swap="innerHTML">
+                <?= csrf_field() ?>
+
+                <label for="internal_body">Internal note</label>
+                <textarea name="internal_body" id="internal_body" rows="4" maxlength="10000" placeholder="Visible to staff and admins only" required><?= esc(old_value('internal_body')) ?></textarea>
+
+                <div class="form-actions">
+                    <button type="submit">Add internal note</button>
+                </div>
+            </form>
+        <?php endif; ?>
 
         <form method="post" action="<?= ROOT ?>/tickets/status/<?= (int)$ticket->id ?>"
             hx-post="<?= ROOT ?>/tickets/status/<?= (int)$ticket->id ?>"
