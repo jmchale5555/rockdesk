@@ -10,6 +10,7 @@ A straightforward IT support ticket handling system built on a custom PHP MVC mo
 - Supports admin-managed local users with roles for users, staff, and admins.
 - Includes optional Active Directory / LDAPS authentication while keeping application roles controlled locally.
 - Sends optional SMTP email notifications for ticket creation, replies, assignments, and resolution.
+- Supports optional inbound email importing over IMAP for ticket creation, email replies, pending unknown senders, and standalone image attachments.
 - Records ticket events for key workflow changes such as creation, replies, assignment, priority changes, status changes, reopening, and auto-close.
 - Keeps deployment practical with Docker Compose, Apache, PHP, MariaDB, local static assets, project-native migrations, and seeders.
 
