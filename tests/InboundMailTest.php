@@ -4,6 +4,7 @@ use Core\InboundMailCleaner;
 use Core\InboundMailInspector;
 use Core\InboundMessage;
 use Core\InboundTicketImporter;
+use Core\ImapInboundMailSource;
 use Model\Ticket;
 use Model\InboundEmail;
 use PHPUnit\Framework\TestCase;
@@ -156,5 +157,20 @@ final class InboundMailTest extends TestCase
         $this->assertSame('Email Sender', $data['email_requester_name']);
         $this->assertSame('sender@example.com', $data['email_requester_email']);
         $this->assertSame(1, $data['is_pending_requester']);
+    }
+
+    public function testImapSourceBuildsMailboxPathFromConfig(): void
+    {
+        $source = new ImapInboundMailSource;
+
+        $this->assertSame('{outlook.office365.com:993/imap/ssl}INBOX', $source->mailboxPath());
+        $this->assertSame('{outlook.office365.com:993/imap/ssl}Processed', $source->mailboxPath('Processed'));
+    }
+
+    public function testImapSourceReportsConfiguredWhenRequiredValuesExist(): void
+    {
+        $source = new ImapInboundMailSource;
+
+        $this->assertTrue($source->isConfigured());
     }
 }

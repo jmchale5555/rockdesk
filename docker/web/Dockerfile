@@ -7,17 +7,21 @@ RUN apt-get update \
         libcurl4-openssl-dev \
         libfreetype6-dev \
         libicu-dev \
+        libc-client-dev \
         libjpeg62-turbo-dev \
         libldap2-dev \
         libonig-dev \
         libpng-dev \
+        libkrb5-dev \
         libsqlite3-dev \
         libzip-dev \
         unzip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
     && docker-php-ext-install -j"$(nproc)" \
         exif \
         gd \
+        imap \
         intl \
         ldap \
         mbstring \

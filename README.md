@@ -27,6 +27,7 @@ Run these from the project root:
 - `make migrate` - run PHP migrations in dev container
 - `make seed` - run PHP seeders in dev container
 - `make close-resolved` - auto-close tickets resolved longer than `TICKET_AUTO_CLOSE_DAYS` days
+- `make import-mail` - import inbound support mail from the configured source
 - `make db-status` - print migration/seeder/user table status from dev DB
 - `make db-reset` - drop/recreate dev database, then run migrations + seeders
 - `make prune-all` - run `docker system prune -a --volumes` (destructive)
@@ -74,6 +75,14 @@ Run these from the project root:
 - Set `MAIL_ENABLED=true`, `MAILER_DSN`, `MAIL_FROM_ADDRESS`, and `MAIL_FROM_NAME` to enable synchronous SMTP delivery.
 - Notifications currently cover new tickets to staff/admins, staff public replies to requesters, requester replies to assigned staff or the staff queue, assignment changes to the assignee, and resolved tickets to requesters.
 - Internal staff-only notes never notify the requester.
+
+## Inbound Email
+
+- Inbound email is disabled by default with `INBOUND_MAIL_ENABLED=false`.
+- The first inbound source driver is generic IMAP polling; configure `INBOUND_MAIL_DRIVER=imap` and the `INBOUND_IMAP_*` settings from `.env.example`.
+- Run `make import-mail` manually in development, or run `php scripts/import-mail.php` from cron every 1-5 minutes in production.
+- The import command uses a lock file at `storage/import-mail.lock` so concurrent runs exit safely.
+- Processed and ignored messages are moved to `INBOUND_IMAP_PROCESSED_MAILBOX` when configured; failed messages are moved to `INBOUND_IMAP_FAILED_MAILBOX`.
 
 ## Running without Docker
 
