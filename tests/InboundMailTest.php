@@ -60,6 +60,42 @@ final class InboundMailTest extends TestCase
         ])));
     }
 
+    public function testInboundInspectorIgnoresListMessagesWithoutTicketSignal(): void
+    {
+        $inspector = new InboundMailInspector;
+
+        $this->assertSame('list header without ticket signal', $inspector->ignoreReason(InboundMessage::fromArray([
+            'from_email' => 'newsletter@example.com',
+            'headers' => ['List-Id' => 'updates.example.com'],
+            'subject' => 'Monthly update',
+        ])));
+    }
+
+    public function testInboundInspectorAllowsListMessageWithTicketSignal(): void
+    {
+        $inspector = new InboundMailInspector;
+
+        $this->assertSame('', $inspector->ignoreReason(InboundMessage::fromArray([
+            'from_email' => 'user@example.com',
+            'headers' => ['List-Id' => 'internal.example.com'],
+            'subject' => 'Re: TCK-2026-000123',
+        ])));
+    }
+
+    public function testInboundInspectorIgnoresAutomatedSendersAndMicrosoftLoopHeaders(): void
+    {
+        $inspector = new InboundMailInspector;
+
+        $this->assertSame('automated sender', $inspector->ignoreReason(InboundMessage::fromArray([
+            'from_email' => 'mailer-daemon@example.com',
+        ])));
+
+        $this->assertSame('x-ms-exchange-inbox-rules-loop header', $inspector->ignoreReason(InboundMessage::fromArray([
+            'from_email' => 'user@example.com',
+            'headers' => ['X-MS-Exchange-Inbox-Rules-Loop' => 'support@example.com'],
+        ])));
+    }
+
     public function testCleanerStripsPlainTextQuotedThreadConservatively(): void
     {
         $cleaner = new InboundMailCleaner;
@@ -74,6 +110,23 @@ final class InboundMailTest extends TestCase
         $body = "Fixed after reboot.\n\nFrom: Support <support@example.com>\nSent: Sunday, May 17, 2026 10:00 AM\nTo: User <user@example.com>\nSubject: Ticket\n\nOld message";
 
         $this->assertSame('Fixed after reboot.', $cleaner->cleanText($body));
+    }
+
+    public function testCleanerStripsForwardedMessageBoundary(): void
+    {
+        $cleaner = new InboundMailCleaner;
+        $body = "Please see this.\n\n---------- Forwarded message ---------\nFrom: Someone <someone@example.com>\nOld content";
+
+        $this->assertSame('Please see this.', $cleaner->cleanText($body));
+    }
+
+    public function testCleanerStripsOutlookHtmlReplyHeader(): void
+    {
+        $cleaner = new InboundMailCleaner;
+        $cleaned = $cleaner->cleanHtml('<p>Current reply</p><hr><div><b>From:</b> Support<br>Old reply</div>');
+
+        $this->assertStringContainsString('Current reply', $cleaned);
+        $this->assertStringNotContainsString('Old reply', $cleaned);
     }
 
     public function testCleanerDoesNotTreatNormalFromSentenceAsOutlookBlock(): void

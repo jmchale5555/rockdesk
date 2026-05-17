@@ -38,4 +38,20 @@ class InboundEmail
 
         return $this->first(['message_id' => $messageId]);
     }
+
+    public function findByMailboxUid(string $mailboxUid): mixed
+    {
+        $mailboxUid = trim($mailboxUid);
+        if ($mailboxUid === '')
+        {
+            return false;
+        }
+
+        return $this->first(['mailbox_uid' => $mailboxUid]);
+    }
+
+    public function isAlreadyTracked(string $messageId, string $mailboxUid): bool
+    {
+        return (bool)($this->findByMessageId($messageId) ?: $this->findByMailboxUid($mailboxUid));
+    }
 }

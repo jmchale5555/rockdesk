@@ -76,7 +76,16 @@ try
 {
     foreach ($source->fetch(INBOUND_IMAP_MAX_MESSAGES) as $messageNumber => $message)
     {
-        $result = $importer->import($message);
+        try
+        {
+            $result = $importer->import($message);
+        }
+        catch (Throwable $e)
+        {
+            $result = ['status' => 'failed', 'reason' => 'exception: ' . $e->getMessage()];
+            error_log('Inbound mail import failed: ' . $e->getMessage());
+        }
+
         $status = (string)($result['status'] ?? 'failed');
 
         if ($status === 'failed')

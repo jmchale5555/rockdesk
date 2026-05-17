@@ -21,7 +21,7 @@ class InboundMailCleaner
         {
             $trimmed = trim($line);
 
-            if ($trimmed === '-----Original Message-----' || preg_match('/^On .+ wrote:$/i', $trimmed))
+            if ($this->isQuoteBoundary($trimmed))
             {
                 $cutAt = $index;
                 break;
@@ -52,6 +52,8 @@ class InboundMailCleaner
 
         $cleaned = preg_replace('/<blockquote\b[^>]*>.*?<\/blockquote>/is', '', $original) ?? $original;
         $cleaned = preg_replace('/<div\b[^>]*(class|id)=["\'][^"\']*(gmail_quote|gmail_attr|yahoo_quoted|divRplyFwdMsg)[^"\']*["\'][^>]*>.*?<\/div>/is', '', $cleaned) ?? $cleaned;
+        $cleaned = preg_replace('/<hr\b[^>]*>\s*<div\b[^>]*>\s*<b>From:<\/b>[\s\S]*$/i', '', $cleaned) ?? $cleaned;
+        $cleaned = preg_replace('/<div\b[^>]*>\s*On .+? wrote:\s*<\/div>[\s\S]*$/is', '', $cleaned) ?? $cleaned;
         $cleaned = sanitize_rich_text($cleaned);
 
         return $this->safeResult(sanitize_rich_text($original), $cleaned);
@@ -59,7 +61,7 @@ class InboundMailCleaner
 
     private function looksLikeOutlookHeaderBlock(array $lines, int $index): bool
     {
-        if (!preg_match('/^\s*From:\s+.+/i', (string)($lines[$index] ?? '')))
+        if (!preg_match('/^\s*(From:|_{8,}\s*From:)\s+.+/i', (string)($lines[$index] ?? '')))
         {
             return false;
         }
@@ -77,6 +79,26 @@ class InboundMailCleaner
         $body = preg_replace('/\n?(Sent from my iPhone|Sent from Outlook for iOS|Get Outlook for Android)\s*$/i', '', $body) ?? $body;
 
         return trim($body);
+    }
+
+    private function isQuoteBoundary(string $line): bool
+    {
+        if ($line === '-----Original Message-----' || preg_match('/^[-_]{8,}\s*Original Message\s*[-_]{8,}$/i', $line))
+        {
+            return true;
+        }
+
+        if (preg_match('/^[-_]{8,}\s*Forwarded message\s*[-_]{8,}$/i', $line))
+        {
+            return true;
+        }
+
+        if (preg_match('/^On .{3,300} wrote:$/i', $line))
+        {
+            return true;
+        }
+
+        return preg_match('/^From:\s+.+\n?$/i', $line) && preg_match('/Sent from Mail/i', $line);
     }
 
     private function safeResult(string $original, string $cleaned): string

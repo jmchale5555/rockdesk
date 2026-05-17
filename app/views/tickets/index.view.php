@@ -114,7 +114,15 @@
                             </td>
                             <td><?= esc($row->subject) ?></td>
                             <?php if (!empty($isStaffQueue)): ?>
-                                <td><?= esc($row->requester_name) ?> <small>(<?= esc($row->requester_username) ?>)</small></td>
+                                <td>
+                                    <?= esc($row->requester_name) ?>
+                                    <?php if ((int)($row->is_pending_requester ?? 0) === 1): ?>
+                                        <mark class="status-pill pending-requester-pill">Pending email requester</mark>
+                                        <small><?= esc($row->requester_email ?? '') ?></small>
+                                    <?php else: ?>
+                                        <small>(<?= esc($row->requester_username) ?>)</small>
+                                    <?php endif; ?>
+                                </td>
                             <?php endif; ?>
                             <td><?= esc(str_replace('_', ' ', $row->status)) ?></td>
                             <td><?= esc($row->priority) ?></td>

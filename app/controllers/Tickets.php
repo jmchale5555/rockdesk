@@ -127,9 +127,138 @@ class Tickets
         $this->view('tickets/show', [
             'ticket' => $row,
             'staffUsers' => $user->listAssignableStaff() ?: [],
+            'requesterUsers' => $user->listActiveForRequesterLink() ?: [],
+            'pendingRequesterUsername' => $user->suggestUsernameFromEmail((string)($row->email_requester_email ?? '')),
             'comments' => $comment->listVisibleForTicket((int)$row->id, is_staff_or_admin()) ?: [],
             'attachments' => $attachment->listForTicket((int)$row->id, false) ?: [],
         ]);
+    }
+
+    public function linkrequester($id = '')
+    {
+        require_role('admin');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST')
+        {
+            redirect('tickets/show/' . (int)$id);
+        }
+
+        require_csrf();
+
+        $ticket = new Ticket;
+        $row = $ticket->findWithRequester((int)$id);
+        if (!$row)
+        {
+            http_response_code(404);
+            $this->view('404');
+            return;
+        }
+
+        if (!$ticket->isPendingRequester($row))
+        {
+            $this->renderShowWithErrors($row, ['requester' => 'This ticket does not have a pending email requester']);
+            return;
+        }
+
+        $userId = (int)($_POST['user_id'] ?? 0);
+        $user = new User;
+        $linkedUser = $user->findById($userId);
+
+        if (!$linkedUser || (int)($linkedUser->is_active ?? 0) !== 1 || (string)($linkedUser->username ?? '') === 'email_guest')
+        {
+            $this->renderShowWithErrors($row, ['requester' => 'Choose an active user to link']);
+            return;
+        }
+
+        $ticket->update((int)$row->id, $ticket->linkRequesterData((int)$linkedUser->id));
+        $this->recordEvent((int)$row->id, 'requester_linked', (string)($row->email_requester_email ?? ''), (string)$linkedUser->email);
+
+        message('Pending requester linked successfully.');
+        redirect('tickets/show/' . (int)$row->id);
+    }
+
+    public function createrequester($id = '')
+    {
+        require_role('admin');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST')
+        {
+            redirect('tickets/show/' . (int)$id);
+        }
+
+        require_csrf();
+
+        $ticket = new Ticket;
+        $row = $ticket->findWithRequester((int)$id);
+        if (!$row)
+        {
+            http_response_code(404);
+            $this->view('404');
+            return;
+        }
+
+        if (!$ticket->isPendingRequester($row))
+        {
+            $this->renderShowWithErrors($row, ['requester' => 'This ticket does not have a pending email requester']);
+            return;
+        }
+
+        $user = new User;
+        $data = [
+            'name' => trim((string)($_POST['name'] ?? $row->email_requester_name ?? '')),
+            'username' => $user->normalizeUsername((string)($_POST['username'] ?? '')),
+            'email' => trim((string)($_POST['email'] ?? $row->email_requester_email ?? '')),
+            'password' => (string)($_POST['password'] ?? ''),
+            'role' => 'user',
+            'auth_provider' => 'local',
+            'is_active' => 1,
+        ];
+
+        if ($user->validateAdminCreate($data))
+        {
+            if ($user->usernameExists($data['username']))
+            {
+                $user->errors['username'] = 'Username is already in use';
+            }
+
+            if (!empty($data['email']) && $user->emailExists($data['email']))
+            {
+                $user->errors['email'] = 'Email is already in use';
+            }
+        }
+
+        if (!empty($user->errors))
+        {
+            $this->renderShowWithErrors($row, $user->errors);
+            return;
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $user->insert([
+            'name' => $data['name'],
+            'username' => $data['username'],
+            'email' => $data['email'],
+            'password' => password_hash($data['password'], PASSWORD_BCRYPT),
+            'role' => 'user',
+            'auth_provider' => 'local',
+            'is_active' => 1,
+            'must_reset_password' => 1,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $createdUser = $user->first(['username' => $data['username']]);
+        if (!$createdUser)
+        {
+            $this->renderShowWithErrors($row, ['requester' => 'User was created but could not be loaded']);
+            return;
+        }
+
+        $ticket->update((int)$row->id, $ticket->linkRequesterData((int)$createdUser->id));
+        $this->recordEvent((int)$row->id, 'requester_linked', (string)($row->email_requester_email ?? ''), (string)$createdUser->email);
+
+        message('User created and pending requester linked successfully.');
+        redirect('tickets/show/' . (int)$row->id);
     }
 
     public function reply($id = '')
@@ -706,6 +835,8 @@ class Tickets
         $this->view('tickets/show', [
             'ticket' => $ticketRow,
             'staffUsers' => $user->listAssignableStaff() ?: [],
+            'requesterUsers' => $user->listActiveForRequesterLink() ?: [],
+            'pendingRequesterUsername' => $user->suggestUsernameFromEmail((string)($ticketRow->email_requester_email ?? '')),
             'comments' => $comment->listVisibleForTicket((int)$ticketRow->id, is_staff_or_admin()) ?: [],
             'attachments' => $attachment->listForTicket((int)$ticketRow->id, false) ?: [],
             'errors' => $errors,

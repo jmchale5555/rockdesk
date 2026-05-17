@@ -241,6 +241,22 @@ class Ticket
         );
     }
 
+    public function isPendingRequester(mixed $ticket): bool
+    {
+        return !empty($ticket) && (int)($ticket->is_pending_requester ?? 0) === 1;
+    }
+
+    public function linkRequesterData(int $userId): array
+    {
+        return [
+            'user_id' => $userId,
+            'email_requester_name' => null,
+            'email_requester_email' => null,
+            'is_pending_requester' => 0,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ];
+    }
+
     public function isValidStatus(string $status): bool
     {
         return in_array($status, self::STATUSES, true);

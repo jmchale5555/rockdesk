@@ -22,6 +22,68 @@
         <p><mark><?= esc(implode(' | ', $errors)); ?></mark></p>
     <?php endif; ?>
 
+    <?php if (is_staff_or_admin() && (int)($ticket->is_pending_requester ?? 0) === 1): ?>
+        <section class="pending-requester-panel">
+            <header>
+                <h2>Pending Email Requester</h2>
+                <mark class="status-pill pending-requester-pill">Unverified</mark>
+            </header>
+            <p>This ticket was created from an email address that is not linked to an active user account.</p>
+            <dl>
+                <dt>Name</dt>
+                <dd><?= esc($ticket->email_requester_name ?: 'Unknown') ?></dd>
+                <dt>Email</dt>
+                <dd><?= esc($ticket->email_requester_email ?: 'Unknown') ?></dd>
+            </dl>
+
+            <?php if (is_admin()): ?>
+                <div class="pending-requester-actions">
+                    <form method="post" action="<?= ROOT ?>/tickets/linkrequester/<?= (int)$ticket->id ?>"
+                        hx-post="<?= ROOT ?>/tickets/linkrequester/<?= (int)$ticket->id ?>"
+                        hx-target="#page-content"
+                        hx-select="#page-content > *"
+                        hx-select-oob="#site-nav"
+                        hx-swap="innerHTML">
+                        <?= csrf_field() ?>
+                        <label for="pending_user_id">Link to existing user
+                            <select name="user_id" id="pending_user_id" required>
+                                <option value="">Choose user</option>
+                                <?php foreach (($requesterUsers ?? []) as $requesterUser): ?>
+                                    <option value="<?= (int)$requesterUser->id ?>"><?= esc($requesterUser->name) ?> (<?= esc($requesterUser->username) ?><?= !empty($requesterUser->email) ? ' - ' . esc($requesterUser->email) : '' ?>)</option>
+                                <?php endforeach; ?>
+                            </select>
+                        </label>
+                        <button type="submit">Link Requester</button>
+                    </form>
+
+                    <form method="post" action="<?= ROOT ?>/tickets/createrequester/<?= (int)$ticket->id ?>"
+                        hx-post="<?= ROOT ?>/tickets/createrequester/<?= (int)$ticket->id ?>"
+                        hx-target="#page-content"
+                        hx-select="#page-content > *"
+                        hx-select-oob="#site-nav"
+                        hx-swap="innerHTML">
+                        <?= csrf_field() ?>
+                        <label for="pending_name">Create user name
+                            <input type="text" name="name" id="pending_name" value="<?= esc($ticket->email_requester_name ?: '') ?>" required>
+                        </label>
+                        <label for="pending_email">Create user email
+                            <input type="email" name="email" id="pending_email" value="<?= esc($ticket->email_requester_email ?: '') ?>" required>
+                        </label>
+                        <label for="pending_username">Username
+                            <input type="text" name="username" id="pending_username" value="<?= esc($pendingRequesterUsername ?? '') ?>" required>
+                        </label>
+                        <label for="pending_password">Temporary password
+                            <input type="text" name="password" id="pending_password" required>
+                        </label>
+                        <button type="submit">Create User And Link</button>
+                    </form>
+                </div>
+            <?php else: ?>
+                <p><small>An admin can link this requester to an existing user or create a new user account.</small></p>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
+
     <dl class="ticket-meta-grid">
         <div class="ticket-meta-card">
             <dt>Status</dt>
@@ -35,7 +97,14 @@
 
         <div class="ticket-meta-card">
             <dt>Requester</dt>
-            <dd><?= esc($ticket->requester_name) ?> <small>(<?= esc($ticket->requester_username) ?>)</small></dd>
+            <dd>
+                <?= esc($ticket->requester_name) ?>
+                <?php if ((int)($ticket->is_pending_requester ?? 0) === 1): ?>
+                    <small><?= esc($ticket->requester_email ?? '') ?></small>
+                <?php else: ?>
+                    <small>(<?= esc($ticket->requester_username) ?>)</small>
+                <?php endif; ?>
+            </dd>
         </div>
 
         <div class="ticket-meta-card">

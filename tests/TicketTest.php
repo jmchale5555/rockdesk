@@ -226,6 +226,21 @@ final class TicketTest extends TestCase
         $this->assertSame('in_progress', $ticket->statusAfterStaffEngagement('new', 'in_progress', true));
     }
 
+    public function testPendingRequesterHelpersIdentifyAndClearPendingState(): void
+    {
+        $ticket = new Ticket;
+
+        $this->assertTrue($ticket->isPendingRequester((object)['is_pending_requester' => 1]));
+        $this->assertFalse($ticket->isPendingRequester((object)['is_pending_requester' => 0]));
+
+        $data = $ticket->linkRequesterData(42);
+        $this->assertSame(42, $data['user_id']);
+        $this->assertNull($data['email_requester_name']);
+        $this->assertNull($data['email_requester_email']);
+        $this->assertSame(0, $data['is_pending_requester']);
+        $this->assertArrayHasKey('updated_at', $data);
+    }
+
     public function testStatusUpdateDataSetsAndClearsResolvedAt(): void
     {
         $ticket = new Ticket;

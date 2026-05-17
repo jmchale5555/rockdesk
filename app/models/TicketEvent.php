@@ -18,6 +18,7 @@ class TicketEvent
         'internal_note_added',
         'attachment_uploaded',
         'email_imported',
+        'requester_linked',
     ];
 
     protected $table = 'ticket_events';

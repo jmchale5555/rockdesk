@@ -222,6 +222,26 @@ class User
         return $this->first(['username' => 'email_guest']);
     }
 
+    public function listActiveForRequesterLink(): array|bool
+    {
+        return $this->query(
+            "select id, name, username, email, role
+             from users
+             where is_active = 1
+               and username != 'email_guest'
+             order by name asc, username asc"
+        );
+    }
+
+    public function suggestUsernameFromEmail(string $email): string
+    {
+        $local = explode('@', strtolower(trim($email)))[0] ?? '';
+        $username = preg_replace('/[^a-zA-Z0-9._-]+/', '.', $local);
+        $username = trim((string)$username, '.-_');
+
+        return mb_substr($username !== '' ? $username : 'user', 0, 100);
+    }
+
     public function listForAdmin(): array|bool
     {
         return $this->query(

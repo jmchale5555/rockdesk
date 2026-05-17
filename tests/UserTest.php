@@ -30,6 +30,15 @@ final class UserTest extends TestCase
         $this->assertFalse($user->isValidUsername('john@example.com'));
     }
 
+    public function testSuggestUsernameFromEmailUsesSafeLocalPart(): void
+    {
+        $user = new User;
+
+        $this->assertSame('jane.smith', $user->suggestUsernameFromEmail('Jane Smith@example.com'));
+        $this->assertSame('support.user', $user->suggestUsernameFromEmail('support+user@example.com'));
+        $this->assertSame('user', $user->suggestUsernameFromEmail(''));
+    }
+
     public function testOnlyKnownRolesAreValid(): void
     {
         $user = new User;

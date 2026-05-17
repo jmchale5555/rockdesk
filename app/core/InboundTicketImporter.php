@@ -39,7 +39,7 @@ class InboundTicketImporter
 
     public function import(InboundMessage $message): array
     {
-        if ($message->messageId !== '' && $this->inboundEmails->findByMessageId($message->messageId))
+        if ($this->inboundEmails->isAlreadyTracked($message->messageId, $message->mailboxUid))
         {
             return ['status' => 'ignored', 'reason' => 'duplicate message'];
         }
@@ -280,19 +280,26 @@ class InboundTicketImporter
 
     private function recordInbound(InboundMessage $message, string $status, ?string $error = null, ?int $ticketId = null): void
     {
-        $this->inboundEmails->insert([
-            'message_id' => $message->messageId !== '' ? trim($message->messageId, '<>') : null,
-            'mailbox_uid' => $message->mailboxUid !== '' ? $message->mailboxUid : null,
-            'from_email' => $message->fromEmail,
-            'from_name' => $message->fromName !== '' ? $message->fromName : null,
-            'subject' => $message->subject !== '' ? mb_substr($message->subject, 0, 255) : null,
-            'received_at' => $message->receivedAt,
-            'processed_at' => date('Y-m-d H:i:s'),
-            'status' => $this->inboundEmails->normalizeStatus($status),
-            'error' => $error,
-            'ticket_id' => $ticketId,
-            'created_at' => date('Y-m-d H:i:s'),
-        ]);
+        try
+        {
+            $this->inboundEmails->insert([
+                'message_id' => $message->messageId !== '' ? trim($message->messageId, '<>') : null,
+                'mailbox_uid' => $message->mailboxUid !== '' ? $message->mailboxUid : null,
+                'from_email' => $message->fromEmail,
+                'from_name' => $message->fromName !== '' ? $message->fromName : null,
+                'subject' => $message->subject !== '' ? mb_substr($message->subject, 0, 255) : null,
+                'received_at' => $message->receivedAt,
+                'processed_at' => date('Y-m-d H:i:s'),
+                'status' => $this->inboundEmails->normalizeStatus($status),
+                'error' => $error !== null ? mb_substr($error, 0, 5000) : null,
+                'ticket_id' => $ticketId,
+                'created_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
+        catch (\Throwable $e)
+        {
+            error_log('Inbound email tracking failed: ' . $e->getMessage());
+        }
     }
 
     private function recordEvent(int $ticketId, ?int $userId, string $eventType, ?string $oldValue = null, ?string $newValue = null, ?string $body = null): void
