@@ -40,6 +40,7 @@ final class TicketTest extends TestCase
         $data = $ticket->makeCreateData(12, '  Laptop issue  ', '  It stopped booting.  ', 'TCK-2026-000001');
 
         $this->assertSame('TCK-2026-000001', $data['ticket_number']);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{32}$/', $data['email_token']);
         $this->assertSame(12, $data['user_id']);
         $this->assertNull($data['assigned_to']);
         $this->assertSame('Laptop issue', $data['subject']);
@@ -142,6 +143,24 @@ final class TicketTest extends TestCase
             ['id' => 2, 'name' => 'Valid', 'email' => 'valid@example.com'],
             ['id' => 5, 'name' => 'Other', 'email' => 'other@example.com'],
         ], $recipients);
+    }
+
+    public function testTicketNotifierBuildsPlusAddressReplyToWhenEnabled(): void
+    {
+        $notifier = new TicketNotifier;
+
+        $this->assertSame('support+abc123@example.com', $notifier->replyToAddress('abc123'));
+    }
+
+    public function testTicketNotifierAddsLoopPreventionHeaders(): void
+    {
+        $notifier = new TicketNotifier;
+
+        $this->assertSame([
+            'Auto-Submitted' => 'auto-generated',
+            'X-Auto-Response-Suppress' => 'All',
+            'X-Loop' => 'rockdesk',
+        ], $notifier->loopPreventionHeaders());
     }
 
     public function testTicketPriorityValidationAllowsKnownPrioritiesOnly(): void

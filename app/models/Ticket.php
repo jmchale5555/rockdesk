@@ -15,6 +15,7 @@ class Ticket
 
     protected $allowedColumns = [
         'ticket_number',
+        'email_token',
         'user_id',
         'assigned_to',
         'subject',
@@ -47,6 +48,7 @@ class Ticket
 
         return [
             'ticket_number' => $ticketNumber,
+            'email_token' => $this->generateEmailToken(),
             'user_id' => $userId,
             'assigned_to' => null,
             'subject' => trim($subject),
@@ -273,6 +275,32 @@ class Ticket
         }
 
         return $requestedStatus;
+    }
+
+    public function generateEmailToken(): string
+    {
+        return bin2hex(random_bytes(16));
+    }
+
+    public function ensureEmailToken(mixed $ticket): string
+    {
+        $token = trim((string)($ticket->email_token ?? ''));
+        if ($token !== '')
+        {
+            return $token;
+        }
+
+        $token = $this->generateEmailToken();
+        $this->update((int)$ticket->id, [
+            'email_token' => $token,
+        ]);
+
+        if (is_object($ticket))
+        {
+            $ticket->email_token = $token;
+        }
+
+        return $token;
     }
 
     public function statusUpdateData(string $oldStatus, string $newStatus): array

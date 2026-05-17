@@ -27,6 +27,9 @@ $mailerDsn = trim((string)(getenv('MAILER_DSN') ?: ''));
 $mailFromAddress = trim((string)(getenv('MAIL_FROM_ADDRESS') ?: ''));
 $mailFromName = trim((string)(getenv('MAIL_FROM_NAME') ?: $appName));
 $mailEnabled = filter_var(getenv('MAIL_ENABLED') ?: ($mailerDsn !== '' && $mailFromAddress !== '' ? 'true' : 'false'), FILTER_VALIDATE_BOOLEAN);
+$inboundMailAddress = trim((string)(getenv('INBOUND_MAIL_ADDRESS') ?: $mailFromAddress));
+$inboundMailPlusAddressingEnabled = filter_var(getenv('INBOUND_MAIL_PLUS_ADDRESSING_ENABLED') ?: 'false', FILTER_VALIDATE_BOOLEAN);
+$inboundMailPlusDelimiter = trim((string)(getenv('INBOUND_MAIL_PLUS_DELIMITER') ?: '+'));
 
 define('DBNAME', $dbName);
 define('DBHOST', $dbHost);
@@ -57,3 +60,6 @@ define('MAIL_ENABLED', $mailEnabled);
 define('MAILER_DSN', $mailerDsn);
 define('MAIL_FROM_ADDRESS', $mailFromAddress);
 define('MAIL_FROM_NAME', $mailFromName);
+define('INBOUND_MAIL_ADDRESS', $inboundMailAddress);
+define('INBOUND_MAIL_PLUS_ADDRESSING_ENABLED', $inboundMailPlusAddressingEnabled);
+define('INBOUND_MAIL_PLUS_DELIMITER', preg_match('/^[+._-]$/', $inboundMailPlusDelimiter) ? $inboundMailPlusDelimiter : '+');

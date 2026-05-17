@@ -22,7 +22,7 @@ class Mailer
             && filter_var(MAIL_FROM_ADDRESS, FILTER_VALIDATE_EMAIL);
     }
 
-    public function send(array $recipients, string $subject, string $html, string $text = ''): bool
+    public function send(array $recipients, string $subject, string $html, string $text = '', array $options = []): bool
     {
         if (!$this->isConfigured())
         {
@@ -41,6 +41,24 @@ class Mailer
             ->subject($subject)
             ->html($html)
             ->text($text !== '' ? $text : trim(strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $html))));
+
+        $replyTo = trim((string)($options['reply_to'] ?? ''));
+        if (filter_var($replyTo, FILTER_VALIDATE_EMAIL))
+        {
+            $email->replyTo($replyTo);
+        }
+
+        $headers = $email->getHeaders();
+        foreach (($options['headers'] ?? []) as $name => $value)
+        {
+            $headers->addTextHeader((string)$name, (string)$value);
+        }
+
+        $messageId = trim((string)($options['message_id'] ?? ''));
+        if ($messageId !== '')
+        {
+            $headers->addIdHeader('Message-ID', $messageId);
+        }
 
         try
         {
